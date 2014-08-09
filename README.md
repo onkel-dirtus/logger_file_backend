@@ -2,11 +2,10 @@ LoggerFileBackend
 =================
 
 A simple `Logger` backend which writes logs to a file. It does not handle log
-rotation for you, but it does tolerate moving log file renames, so it can be
+rotation for you, but it does tolerate log file renames, so it can be
 used in conjunction with external log rotation.
 
-**Note** This may not work on windows, because `File.Stat.inode` is used to determine
-whether the log file has been (re)moved and, on non-unix, `File.Stat.inode` is always 0.
+**Note** The following of file renames does not work on Windows, because `File.Stat.inode` is used to determine whether the log file has been (re)moved and, on non-Unix, `File.Stat.inode` is always 0.
 
 ## Configuration
 
