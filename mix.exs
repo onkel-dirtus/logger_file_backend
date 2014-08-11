@@ -5,6 +5,8 @@ defmodule LoggerFileBackend.Mixfile do
     [app: :logger_file_backend,
      version: "0.0.1",
      elixir: "~> 0.15.1-dev",
+     description: description,
+     package: package,
      deps: deps]
   end
 
@@ -15,15 +17,16 @@ defmodule LoggerFileBackend.Mixfile do
     [applications: []]
   end
 
-  # Dependencies can be hex.pm packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1"}
-  #
-  # Type `mix help deps` for more examples and options
+  defp description do
+    "Simple logger backend that writes to a file"
+  end
+
+  defp package do
+    [contributors: ["Kurt Williams"],
+     licenses: ["MIT"],
+     links: %{"GitHub" => "https://github.com/onkel-dirtus/logger_file_backend"}]
+  end
+
   defp deps do
     []
   end
