@@ -73,7 +73,7 @@ defmodule LoggerFileBackend do
 
 
   defp format_event(level, msg, ts, md, %{format: format, metadata: metadata}) do
-    [Logger.Formatter.format(format, level, msg, ts, Dict.take(md, metadata)), "\n"]
+    Logger.Formatter.format(format, level, msg, ts, Dict.take(md, metadata))
   end
 
 

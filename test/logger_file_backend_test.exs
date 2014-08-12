@@ -29,14 +29,14 @@ defmodule LoggerFileBackendTest do
   end
 
   test "can configure format" do
-    config format: "$message [$level]"
+    config format: "$message [$level]\n"
 
     Logger.debug("hello")
     assert log =~ "hello [debug]"
   end
 
   test "can configure metadata" do
-    config format: "$metadata$message", metadata: [:user_id]
+    config format: "$metadata$message\n", metadata: [:user_id]
 
     Logger.debug("hello")
     assert log =~ "hello"
@@ -56,7 +56,7 @@ defmodule LoggerFileBackendTest do
   end
 
   test "logs to file after old has been moved" do
-    config format: "$message"
+    config format: "$message\n"
 
     Logger.debug "foo"
     Logger.debug "bar"
