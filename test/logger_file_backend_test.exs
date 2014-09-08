@@ -18,7 +18,7 @@ defmodule LoggerFileBackendTest do
     config path: nil
 
     Logger.debug "foo"
-    assert {:error, {:already_started, _}} = Logger.add_backend(@backend)
+    assert {:error, :already_present} = Logger.add_backend(@backend)
   end
 
   test "creates log file" do
