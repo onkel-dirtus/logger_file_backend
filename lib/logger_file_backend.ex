@@ -52,7 +52,7 @@ defmodule LoggerFileBackend do
 
   defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode} = state) when is_binary(path) do
     if !is_nil(inode) and inode == inode(path) do
-      IO.write(io_device, format_event(level, msg, ts, md, state))
+      :file.write(io_device, format_event(level, msg, ts, md, state))
       {:ok, state}
     else
       log_event(level, msg, ts, md, %{state | io_device: nil, inode: nil})
