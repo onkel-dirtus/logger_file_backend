@@ -69,6 +69,24 @@ defmodule LoggerFileBackendTest do
     assert log == "biz\nbaz\n"
   end
 
+  test "rotate files" do
+    path |> Path.dirname |> File.mkdir_p
+
+    0..4 |> Enum.each(fn i ->
+      File.touch("#{path}.#{i}")
+    end)
+
+    Logger.debug "foo"
+    assert path |> Path.dirname |> File.ls! == ["test.log"] ++ (0..4 |> Enum.map(fn i -> "test.log.#{i}" end))
+
+    LoggerFileBackendUtil.rotate_logfile(path, 5)
+    assert path |> Path.dirname |> File.ls! == (0..4 |> Enum.map(fn i -> "test.log.#{i}" end))
+
+    Logger.debug "foo"
+    assert path |> Path.dirname |> File.ls! == ["test.log"] ++ (0..4 |> Enum.map(fn i -> "test.log.#{i}" end))
+
+  end
+
   defp path do
     {:ok, path} = GenEvent.call(Logger, @backend, :path)
     path
