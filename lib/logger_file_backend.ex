@@ -72,7 +72,11 @@ defmodule LoggerFileBackend do
 
   defp log_event(level, msg, {date, {h, m, s, ms}} = ts, md, %{path: path, io_device: io_device, inode: inode, size: rotate_size, count: count} = state) when is_binary(path) do
     from = :calendar.datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}})
-    tss = :calendar.local_time_to_universal_time({date, {h, m, s}}) |> :calendar.datetime_to_gregorian_seconds
+    tss = case :calendar.local_time_to_universal_time_dst({date, {h, m, s}}) do
+      [] -> raise "local_time_to_universal_time_dst error"
+      [_dst, utc] -> utc
+      [utc] -> utc
+    end |> :calendar.datetime_to_gregorian_seconds
     tss = (tss - from) * 1000 + ms
     y1 = rem tss, 1000_000_000
     tss = {div(tss, 1000_000_000), div(y1, 1000), rem(y1, 1000) * 1000}
@@ -97,7 +101,7 @@ defmodule LoggerFileBackend do
 
 
   defp do_write(level, msg, ts, md, %{io_device: io_device} = state) do
-    x = :file.write(io_device, format_event(level, msg, ts, md, state))
+    :file.write(io_device, format_event(level, msg, ts, md, state))
     {:ok, state}
   end
 
@@ -139,7 +143,7 @@ defmodule LoggerFileBackend do
     {ms, s, _} = :os.timestamp
     now_ts = ms * 1000000 + s
     tomorrow_ts = now_ts + 86400
-    {tomorrow, _} = {div(tomorrow_ts, 1000_000), rem(tomorrow_ts, 1000_000), 0} |> :calendar.now_to_datetime
+    {tomorrow, _} = {div(tomorrow_ts, 1000_000), rem(tomorrow_ts, 1000_000), 0} |> :calendar.now_to_local_time
     {days, {h, m, s}} = :calendar.time_difference(:calendar.local_time, {tomorrow, {0,0,0}})
     next_time = days * 86400 + h * 3600 + m * 60 + s
     :erlang.send_after(next_time, self, {:rotate, name})
