@@ -14,7 +14,7 @@ defmodule LoggerFileBackend do
   @default_format "$time $metadata[$level] $message\n"
   @default_rotate_size 10485760 # 10MB
   @default_rotate_count 10
-  @default_check_interval 1000
+  @default_check_interval 600_000 # 10 minutes
 
   def init({__MODULE__, name}) do
     configs = configure(name, [])

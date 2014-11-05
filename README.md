@@ -15,6 +15,9 @@ used in conjunction with external log rotation.
 * level - the logging level for the backend
 * format - the logging format for the backend
 * metadata - the metadata to include
+* size - the maximum size of each log file, in bytes, default 10485760 (10MB)
+* count - the maximum numbers of log files, default 10
+* check_interval - the interval of checking rotation, in milliseconds, default 600,000 (10 minutes)
 
 
 ### Runtime configuration for mutiple log files
