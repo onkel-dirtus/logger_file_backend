@@ -77,13 +77,13 @@ defmodule LoggerFileBackendTest do
     end)
 
     Logger.debug "foo"
-    assert path |> Path.dirname |> File.ls! == ["test.log"] ++ (0..4 |> Enum.map(fn i -> "test.log.#{i}" end))
+    assert path |> Path.dirname |> File.ls! |> Enum.sort == ["test.log"] ++ (0..4 |> Enum.map(fn i -> "test.log.#{i}" end))
 
     LoggerFileBackendUtil.rotate_logfile(path, 5)
-    assert path |> Path.dirname |> File.ls! == (0..4 |> Enum.map(fn i -> "test.log.#{i}" end))
+    assert path |> Path.dirname |> File.ls! |> Enum.sort == (0..4 |> Enum.map(fn i -> "test.log.#{i}" end))
 
     Logger.debug "foo"
-    assert path |> Path.dirname |> File.ls! == ["test.log"] ++ (0..4 |> Enum.map(fn i -> "test.log.#{i}" end))
+    assert path |> Path.dirname |> File.ls! |> Enum.sort == ["test.log"] ++ (0..4 |> Enum.map(fn i -> "test.log.#{i}" end))
 
   end
 
