@@ -28,6 +28,11 @@ defmodule LoggerFileBackendTest do
     assert log =~ "this is a msg"
   end
 
+  test "can log utf8 chars" do
+    Logger.debug("ß\x{0032}\x{0222}")
+    assert log =~ "ß\x{0032}\x{0222}"
+  end
+
   test "can configure format" do
     config format: "$message [$level]\n"
 
