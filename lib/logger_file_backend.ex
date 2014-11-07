@@ -43,9 +43,9 @@ defmodule LoggerFileBackend do
     end
   end
 
-  def handle_info({:rotate, file}, %{name: file, count: count} = state) do
-    Util.rotate_logfile(file, count)
-    schedule_rotation(file)
+  def handle_info({:rotate, path}, %{path: path, count: count} = state) do
+    Util.rotate_logfile(path, count)
+    schedule_rotation(path)
     {:ok, state}
   end
 
