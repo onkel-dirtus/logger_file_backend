@@ -3,7 +3,7 @@ defmodule LoggerFileBackend.Mixfile do
 
   def project do
     [app: :logger_file_backend,
-     version: "0.0.4",
+     version: "0.0.5",
      elixir: ">= 1.0.0 and <= 1.2.0",
      description: description,
      package: package,
@@ -22,7 +22,7 @@ defmodule LoggerFileBackend.Mixfile do
   end
 
   defp package do
-    [contributors: ["Kurt Williams"],
+    [maintainers: ["Kurt Williams"],
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/onkel-dirtus/logger_file_backend"}]
   end
