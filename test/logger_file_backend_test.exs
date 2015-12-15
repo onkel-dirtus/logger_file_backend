@@ -41,16 +41,17 @@ defmodule LoggerFileBackendTest do
   end
 
   test "can configure metadata" do
-    config format: "$metadata$message\n", metadata: [:user_id]
+    config format: "$metadata$message\n", metadata: [:user_id, :auth]
 
     Logger.debug("hello")
     assert log =~ "hello"
 
+    Logger.metadata(auth: true)
     Logger.metadata(user_id: 11)
     Logger.metadata(user_id: 13)
 
-    Logger.debug("user_id=13 hello")
-    assert log =~ "hello"
+    Logger.debug("hello")
+    assert log =~ "user_id=13 auth=true hello"
   end
 
   test "can configure level" do

@@ -72,8 +72,18 @@ defmodule LoggerFileBackend do
   end
 
 
-  defp format_event(level, msg, ts, md, %{format: format, metadata: metadata}) do
-    Logger.Formatter.format(format, level, msg, ts, Dict.take(md, metadata))
+  defp format_event(level, msg, ts, md, %{format: format, metadata: keys}) do
+    Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
+  end
+
+
+  defp take_metadata(metadata, keys) do
+    Enum.reduce(keys, [], fn key, acc ->
+      case Keyword.fetch(metadata, key) do
+        {:ok, val} -> [{key, val} | acc]
+        :error     -> acc
+      end
+    end) |> Enum.reverse()
   end
 
 
