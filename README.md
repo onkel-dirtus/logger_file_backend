@@ -33,10 +33,10 @@ config :logger,
 With this configuration, the `:logger` application will start one `LoggerFileBackend`
 named `{LoggerFileBackend, :error_log}`. We still need to set the correct file
 path and log levels for the backend, though. To do that, we add another config
-stanza. Together with the stanzaabove, we'll have something like this:
+stanza. Together with the stanza above, we'll have something like this:
 
 ```elixir
-# tell logger to load 2 LoggerFileBackend processes
+# tell logger to load a LoggerFileBackend processes
 config :logger,
   backends: [{LoggerFileBackend, :error_log}]
 
