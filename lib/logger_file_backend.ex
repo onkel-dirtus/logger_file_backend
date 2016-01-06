@@ -16,8 +16,8 @@ defmodule LoggerFileBackend do
   end
 
 
-  def handle_call({:configure, opts}, %{name: name}) do
-    {:ok, :ok, configure(name, opts)}
+  def handle_call({:configure, opts}, %{name: name} = state) do
+    {:ok, :ok, configure(name, opts, state)}
   end
 
 
@@ -55,6 +55,7 @@ defmodule LoggerFileBackend do
       IO.write(io_device, format_event(level, msg, ts, md, state))
       {:ok, state}
     else
+      File.close(io_device)
       log_event(level, msg, ts, md, %{state | io_device: nil, inode: nil})
     end
   end
@@ -96,6 +97,11 @@ defmodule LoggerFileBackend do
 
 
   defp configure(name, opts) do
+    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil}
+    configure(name, opts, state)
+  end
+
+  defp configure(name, opts, state) do
     env = Application.get_env(:logger, name, [])
     opts = Keyword.merge(env, opts)
     Application.put_env(:logger, name, opts)
@@ -105,6 +111,6 @@ defmodule LoggerFileBackend do
     format   = Keyword.get(opts, :format, @default_format) |> Logger.Formatter.compile
     path     = Keyword.get(opts, :path)
 
-    %{name: name, path: path, io_device: nil, inode: nil, format: format, level: level, metadata: metadata}
+    %{state | name: name, path: path, format: format, level: level, metadata: metadata}
   end
 end
