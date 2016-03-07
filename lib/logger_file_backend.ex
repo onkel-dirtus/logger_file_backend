@@ -1,4 +1,7 @@
 defmodule LoggerFileBackend do
+  @moduledoc"""
+  """
+
   use GenEvent
 
   @type path      :: String.t
@@ -51,7 +54,7 @@ defmodule LoggerFileBackend do
   end
 
   defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode} = state) when is_binary(path) do
-    if !is_nil(inode) and inode == inode(path) do
+    if !is_nil(inode) and inode == get_inode(path) do
       IO.write(io_device, format_event(level, msg, ts, md, state))
       {:ok, state}
     else
@@ -79,16 +82,18 @@ defmodule LoggerFileBackend do
 
 
   defp take_metadata(metadata, keys) do
-    Enum.reduce(keys, [], fn key, acc ->
+    metadatas = Enum.reduce(keys, [], fn key, acc ->
       case Keyword.fetch(metadata, key) do
         {:ok, val} -> [{key, val} | acc]
         :error     -> acc
       end
-    end) |> Enum.reverse()
+    end)
+    
+    Enum.reverse(metadatas)
   end
 
 
-  defp inode(path) do
+  defp get_inode(path) do
     case File.stat(path) do
       {:ok, %File.Stat{inode: inode}} -> inode
       {:error, _} -> nil
@@ -106,10 +111,11 @@ defmodule LoggerFileBackend do
     opts = Keyword.merge(env, opts)
     Application.put_env(:logger, name, opts)
 
-    level    = Keyword.get(opts, :level)
-    metadata = Keyword.get(opts, :metadata, [])
-    format   = Keyword.get(opts, :format, @default_format) |> Logger.Formatter.compile
-    path     = Keyword.get(opts, :path)
+    level         = Keyword.get(opts, :level)
+    metadata      = Keyword.get(opts, :metadata, [])
+    format_opts   = Keyword.get(opts, :format, @default_format) 
+    format        = Logger.Formatter.compile(format_opts)
+    path          = Keyword.get(opts, :path)
 
     %{state | name: name, path: path, format: format, level: level, metadata: metadata}
   end
