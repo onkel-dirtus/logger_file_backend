@@ -55,8 +55,20 @@ defmodule LoggerFileBackend do
 
   defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode} = state) when is_binary(path) do
     if !is_nil(inode) and inode == get_inode(path) do
-      IO.write(io_device, format_event(level, msg, ts, md, state))
-      {:ok, state}
+      output = format_event(level, msg, ts, md, state)
+      try do
+        IO.write(io_device, output)
+        {:ok, state}
+      rescue
+        ErlangError ->
+          case open_log(path) do
+            {:ok, io_device, inode} ->
+              IO.write(io_device, prune(output))
+              {:ok, %{state | io_device: io_device, inode: inode}}
+            _other ->
+              {:ok, %{state | io_device: nil, inode: nil}}
+          end
+      end
     else
       File.close(io_device)
       log_event(level, msg, ts, md, %{state | io_device: nil, inode: nil})
@@ -88,7 +100,7 @@ defmodule LoggerFileBackend do
         :error     -> acc
       end
     end)
-    
+
     Enum.reverse(metadatas)
   end
 
@@ -113,10 +125,26 @@ defmodule LoggerFileBackend do
 
     level         = Keyword.get(opts, :level)
     metadata      = Keyword.get(opts, :metadata, [])
-    format_opts   = Keyword.get(opts, :format, @default_format) 
+    format_opts   = Keyword.get(opts, :format, @default_format)
     format        = Logger.Formatter.compile(format_opts)
     path          = Keyword.get(opts, :path)
 
     %{state | name: name, path: path, format: format, level: level, metadata: metadata}
   end
+
+  @replacement "�"
+
+  @spec prune(IO.chardata) :: IO.chardata
+  def prune(binary) when is_binary(binary), do: prune_binary(binary, "")
+  def prune([h|t]) when h in 0..1114111, do: [h|prune(t)]
+  def prune([h|t]), do: [prune(h)|prune(t)]
+  def prune([]), do: []
+  def prune(_), do: @replacement
+
+  defp prune_binary(<<h::utf8, t::binary>>, acc),
+    do: prune_binary(t, <<acc::binary, h::utf8>>)
+  defp prune_binary(<<_, t::binary>>, acc),
+    do: prune_binary(t, <<acc::binary, @replacement>>)
+  defp prune_binary(<<>>, acc),
+    do: acc
 end

@@ -4,6 +4,8 @@ defmodule LoggerFileBackendTest do
 
   @backend {LoggerFileBackend, :test}
 
+  import LoggerFileBackend, only: [prune: 1]
+
   # add the backend here instead of `config/test.exs` due to issue 2649
   Logger.add_backend @backend
 
@@ -31,6 +33,19 @@ defmodule LoggerFileBackendTest do
   test "can log utf8 chars" do
     Logger.debug("ß\x{0032}\x{0222}")
     assert log =~ "ß\x{0032}\x{0222}"
+  end
+
+  test "prune/1" do
+    assert prune(1) == "�"
+    assert prune(<<"hí", 233>>) == "hí�"
+    assert prune(["hi"|233]) == ["hi"|"�"]
+    assert prune([233|"hi"]) == [233|"hi"]
+    assert prune([[]|[]]) == [[]]
+  end
+
+  test "prunes invalid utf-8 codepoints" do
+    Logger.debug(<<"hi", 233>>)
+    assert log =~ "hi�"
   end
 
   test "can configure format" do
