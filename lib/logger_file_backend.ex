@@ -29,8 +29,8 @@ defmodule LoggerFileBackend do
   end
 
 
-  def handle_event({level, _gl, {Logger, msg, ts, md}}, %{level: min_level} = state) do
-    if is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt do
+  def handle_event({level, _gl, {Logger, msg, ts, md}}, %{level: min_level, metadata_filter: metadata_filter} = state) do
+    if (is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt) and metadata_matches?(md, metadata_filter) do
       log_event(level, msg, ts, md, state)
     else
       {:ok, state}
@@ -92,6 +92,19 @@ defmodule LoggerFileBackend do
     Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
   end
 
+  @doc false
+  @spec metadata_matches?(Keyword.t, nil|Keyword.t) :: true|false
+  def metadata_matches?(_md, nil), do: true
+  def metadata_matches?(_md, []), do: true # all of the filter keys are present
+  def metadata_matches?(md, [{key, val}|rest] = list) do
+    case Keyword.fetch(md, key) do
+      {:ok, ^val} ->
+        metadata_matches?(md, rest)
+      _ -> false #fail on first mismatch
+    end
+  end
+
+
 
   defp take_metadata(metadata, keys) do
     metadatas = Enum.reduce(keys, [], fn key, acc ->
@@ -114,7 +127,7 @@ defmodule LoggerFileBackend do
 
 
   defp configure(name, opts) do
-    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil}
+    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil, metadata_filter: nil}
     configure(name, opts, state)
   end
 
@@ -123,13 +136,14 @@ defmodule LoggerFileBackend do
     opts = Keyword.merge(env, opts)
     Application.put_env(:logger, name, opts)
 
-    level         = Keyword.get(opts, :level)
-    metadata      = Keyword.get(opts, :metadata, [])
-    format_opts   = Keyword.get(opts, :format, @default_format)
-    format        = Logger.Formatter.compile(format_opts)
-    path          = Keyword.get(opts, :path)
+    level           = Keyword.get(opts, :level)
+    metadata        = Keyword.get(opts, :metadata, [])
+    format_opts     = Keyword.get(opts, :format, @default_format)
+    format          = Logger.Formatter.compile(format_opts)
+    path            = Keyword.get(opts, :path)
+    metadata_filter = Keyword.get(opts, :metadata_filter)
 
-    %{state | name: name, path: path, format: format, level: level, metadata: metadata}
+    %{state | name: name, path: path, format: format, level: level, metadata: metadata, metadata_filter: metadata_filter}
   end
 
   @replacement "�"
