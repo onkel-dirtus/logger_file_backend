@@ -7,6 +7,26 @@ used in conjunction with external log rotation.
 
 **Note** The following of file renames does not work on Windows, because `File.Stat.inode` is used to determine whether the log file has been (re)moved and, on non-Unix, `File.Stat.inode` is always 0.
 
+## Getting Started
+
+There are some brief examples on usage below, but I highly recommend you review the
+API docs [here](https://hexdocs.pm/timex), there are many examples, and some extra pages with
+richer documentation on specific subjects such as custom formatters/parsers, etc.
+
+### Adding LoggerFileBackend To Your Project
+
+To use LoggerFileBackend with your projects, edit your `mix.exs` file and add it as a dependency:
+
+```elixir
+defp deps do
+  [{:logger_file_backend, "~> x.x.x"}]
+end
+
+defp application do
+  [applications: [:logger_file_backend]]
+end
+```
+
 ## Configuration
 
 `LoggerFileBackend` is a custom backend for the elixir `:logger` application. As
