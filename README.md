@@ -55,6 +55,7 @@ multiple log files.
 * level - the logging level for the backend
 * format - the logging format for the backend
 * metadata - the metadata to include
+* metadata_filter - metadata terms which must be present in order to log
 
 
 ### Examples
@@ -66,7 +67,8 @@ Logger.add_backend {LoggerFileBackend, :debug}
 Logger.configure {LoggerFileBackend, :debug},
   path: "/path/to/debug.log",
   format: ...,
-  metadata: ...
+  metadata: ...,
+  metadata_filter: ...
 ```
 
 #### Application config for multiple log files
@@ -83,4 +85,42 @@ config :logger, :info,
 config :logger, :error,
   path: "/path/to/error.log",
   level: :error
+```
+#### Filtering specific metadata terms
+
+This example only logs `:info` statements originating from the `:ui` OTP app; the `:application` metadata key is auto-populated by `Logger`.
+
+```elixir
+config :logger,
+  backends: [{LoggerFileBackend, :ui}]
+
+config :logger, :ui,
+  path: "/path/to/ui.log",
+  level: :info,
+  metadata_filter: [application: :ui]
+```
+
+This example only writes log statements with a custom metadata key to the file.
+
+```elixir
+# in a config file:
+config :logger,
+  backends: [{LoggerFileBackend, :device_1}]
+
+config :logger, :device_1
+  path: "/path/to/device_1.log",
+  level: :debug,
+  metadata_filter: [device: 1]
+
+# Usage:
+# anywhere in the code:
+Logger.info("statement", device: 1)
+
+# or, for a single process, e.g., a GenServer:
+# in init/1:
+Logger.metadata(device: 1)
+# ^ sets device: 1 for all subsequent log statements from this process.
+
+# Later, in other code (handle_cast/2, etc.)
+Logger.info("statement") # <= already tagged with the device_1 metadata
 ```

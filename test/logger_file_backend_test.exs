@@ -4,7 +4,7 @@ defmodule LoggerFileBackendTest do
 
   @backend {LoggerFileBackend, :test}
 
-  import LoggerFileBackend, only: [prune: 1]
+  import LoggerFileBackend, only: [prune: 1, metadata_matches?: 2]
 
   # add the backend here instead of `config/test.exs` due to issue 2649
   Logger.add_backend @backend
@@ -21,6 +21,24 @@ defmodule LoggerFileBackendTest do
 
     Logger.debug "foo"
     assert {:error, :already_present} = Logger.add_backend(@backend)
+  end
+
+  test "can configure metadata_filter" do
+    config metadata_filter: [md_key: true]
+    Logger.debug("shouldn't", md_key: false)
+    Logger.debug("should", md_key: true)
+    refute log =~ "shouldn't"
+    assert log =~ "should"
+    config metadata_filter: nil
+  end
+
+  test "metadata_matches?" do
+    assert metadata_matches?([a: 1], [a: 1]) == true # exact match
+    assert metadata_matches?([b: 1], [a: 1]) == false # total mismatch
+    assert metadata_matches?([b: 1], nil) == true # default to allow
+    assert metadata_matches?([b: 1, a: 1], [a: 1]) == true # metadata is superset of filter
+    assert metadata_matches?([c:1, b: 1, a: 1], [b: 1, a: 1]) == true # multiple filter keys subset of metadata
+    assert metadata_matches?([a: 1], [b: 1, a: 1]) == false # multiple filter keys superset of metadata
   end
 
   test "creates log file" do
