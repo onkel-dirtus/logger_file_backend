@@ -101,7 +101,7 @@ defmodule LoggerFileBackend do
   @spec metadata_matches?(Keyword.t, nil|Keyword.t) :: true|false
   def metadata_matches?(_md, nil), do: true
   def metadata_matches?(_md, []), do: true # all of the filter keys are present
-  def metadata_matches?(md, [{key, val}|rest] = list) do
+  def metadata_matches?(md, [{key, val}|rest]) do
     case Keyword.fetch(md, key) do
       {:ok, ^val} ->
         metadata_matches?(md, rest)
