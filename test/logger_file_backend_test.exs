@@ -37,7 +37,7 @@ defmodule LoggerFileBackendTest do
     assert metadata_matches?([b: 1], [a: 1]) == false # total mismatch
     assert metadata_matches?([b: 1], nil) == true # default to allow
     assert metadata_matches?([b: 1, a: 1], [a: 1]) == true # metadata is superset of filter
-    assert metadata_matches?([c:1, b: 1, a: 1], [b: 1, a: 1]) == true # multiple filter keys subset of metadata
+    assert metadata_matches?([c: 1, b: 1, a: 1], [b: 1, a: 1]) == true # multiple filter keys subset of metadata
     assert metadata_matches?([a: 1], [b: 1, a: 1]) == false # multiple filter keys superset of metadata
   end
 
