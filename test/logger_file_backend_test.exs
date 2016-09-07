@@ -49,8 +49,8 @@ defmodule LoggerFileBackendTest do
   end
 
   test "can log utf8 chars" do
-    Logger.debug("ß\x{0032}\x{0222}")
-    assert log =~ "ß\x{0032}\x{0222}"
+    Logger.debug("ß\uFFaa\u0222")
+    assert log =~ "ßﾪȢ"
   end
 
   test "prune/1" do
