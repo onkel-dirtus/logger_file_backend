@@ -37,7 +37,7 @@ defmodule LoggerFileBackendTest do
     assert metadata_matches?([b: 1], [a: 1]) == false # total mismatch
     assert metadata_matches?([b: 1], nil) == true # default to allow
     assert metadata_matches?([b: 1, a: 1], [a: 1]) == true # metadata is superset of filter
-    assert metadata_matches?([c:1, b: 1, a: 1], [b: 1, a: 1]) == true # multiple filter keys subset of metadata
+    assert metadata_matches?([c: 1, b: 1, a: 1], [b: 1, a: 1]) == true # multiple filter keys subset of metadata
     assert metadata_matches?([a: 1], [b: 1, a: 1]) == false # multiple filter keys superset of metadata
   end
 
@@ -49,8 +49,8 @@ defmodule LoggerFileBackendTest do
   end
 
   test "can log utf8 chars" do
-    Logger.debug("ß\x{0032}\x{0222}")
-    assert log =~ "ß\x{0032}\x{0222}"
+    Logger.debug("ß\uFFaa\u0222")
+    assert log =~ "ßﾪȢ"
   end
 
   test "prune/1" do
