@@ -58,9 +58,9 @@ defmodule LoggerFileBackend do
     end
   end
 
-  defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode} = state) when is_binary(path) do
+  defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode, formatter: formatter} = state) when is_binary(path) do
     if !is_nil(inode) and inode == get_inode(path) do
-      output = format_event(level, msg, ts, md, state)
+      output = format_event(formatter, level, msg, ts, md, state)
       try do
         IO.write(io_device, output)
         {:ok, state}
@@ -93,8 +93,8 @@ defmodule LoggerFileBackend do
   end
 
 
-  defp format_event(level, msg, ts, md, %{format: format, metadata: keys}) do
-    Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
+  defp format_event(formatter, level, msg, ts, md, %{format: format, metadata: keys}) do
+    apply(formatter, :format, [format, level, msg, ts, take_metadata(md, keys)])
   end
 
   @doc false
@@ -132,7 +132,7 @@ defmodule LoggerFileBackend do
 
 
   defp configure(name, opts) do
-    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil, metadata_filter: nil}
+    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil, metadata_filter: nil, formatter: Logger.Formatter}
     configure(name, opts, state)
   end
 
@@ -143,12 +143,13 @@ defmodule LoggerFileBackend do
 
     level           = Keyword.get(opts, :level)
     metadata        = Keyword.get(opts, :metadata, [])
+    formatter       = Keyword.get(opts, :formatter, Logger.Formatter)
     format_opts     = Keyword.get(opts, :format, @default_format)
-    format          = Logger.Formatter.compile(format_opts)
+    format          = apply(formatter, :compile, [format_opts])
     path            = Keyword.get(opts, :path)
     metadata_filter = Keyword.get(opts, :metadata_filter)
 
-    %{state | name: name, path: path, format: format, level: level, metadata: metadata, metadata_filter: metadata_filter}
+    %{state | name: name, path: path, format: format, level: level, metadata: metadata, metadata_filter: metadata_filter, formatter: formatter}
   end
 
   @replacement "�"
