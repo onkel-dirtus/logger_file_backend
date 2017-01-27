@@ -5,14 +5,11 @@ defmodule LoggerFileBackend.Mixfile do
     [app: :logger_file_backend,
      version: "0.0.10",
      elixir: "~> 1.0",
-     description: description,
-     package: package,
-     deps: deps]
+     description: description(),
+     package: package(),
+     deps: deps()]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type `mix help compile.app` for more information
   def application do
     [applications: []]
   end
