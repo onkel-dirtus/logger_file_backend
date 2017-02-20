@@ -112,6 +112,11 @@ config :logger, :device_1
   level: :debug,
   metadata_filter: [device: 1]
 
+config :logger, :device_1
+  path: "/path/to/device_1.log",
+  level: :debug,
+  metadata_filter: fn (metadata)-> metadata == [device: 1] end
+
 # Usage:
 # anywhere in the code:
 Logger.info("statement", device: 1)
