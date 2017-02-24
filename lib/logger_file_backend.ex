@@ -18,16 +18,13 @@ defmodule LoggerFileBackend do
     {:ok, configure(name, [])}
   end
 
-
   def handle_call({:configure, opts}, %{name: name} = state) do
     {:ok, :ok, configure(name, opts, state)}
   end
 
-
   def handle_call(:path, %{path: path} = state) do
     {:ok, {:ok, path}, state}
   end
-
 
   def handle_event({level, _gl, {Logger, msg, ts, md}}, %{level: min_level, metadata_filter: metadata_filter} = state) do
     if (is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt) and metadata_matches?(md, metadata_filter) do
@@ -42,9 +39,7 @@ defmodule LoggerFileBackend do
     {:ok, state}
   end
 
-
   # helpers
-
   defp log_event(_level, _msg, _ts, _md, %{path: nil} = state) do
     {:ok, state}
   end
@@ -58,7 +53,8 @@ defmodule LoggerFileBackend do
     end
   end
 
-  defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode} = state) when is_binary(path) do
+  defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode, rotate: rotate} = state) when is_binary(path) do
+    {:ok, io_device, inode} = rotate(path, rotate, ts, io_device, inode)
     if !is_nil(inode) and inode == get_inode(path) do
       output = format_event(level, msg, ts, md, state)
       try do
@@ -80,6 +76,32 @@ defmodule LoggerFileBackend do
     end
   end
 
+  defp rotate(path, %{period: :date, keep: keep}, ts, io_device, inode) when is_integer(keep) and keep > 0 do
+    rootname = Path.rootname(path)
+    extension = Path.extname(path)
+    files = Path.wildcard("#{rootname}*#{extension}")
+    if Enum.count(files) > keep do
+      files
+      |> Enum.sort()
+      |> Enum.slice(keep..Enum.count(files))
+      |> Enum.map(&File.rm(&1))
+    end
+    case File.stat(path) do
+      {:ok, %{mtime: {file_date, _}}} ->
+        {ts_date, _} = ts
+        ts_date = Date.from_erl!(ts_date)
+        file_date = Date.from_erl!(file_date)
+        if ts_date != file_date do
+          File.rename(path, "#{rootname}_#{file_date}#{extension}")
+          open_log(path)
+        else
+          {:ok, io_device, inode}
+        end
+      _ -> {:ok, io_device, inode}
+    end
+  end
+
+  defp rotate(_, nil, _, _, _), do: true
 
   defp open_log(path) do
     case (path |> Path.dirname |> File.mkdir_p) do
@@ -91,7 +113,6 @@ defmodule LoggerFileBackend do
       other -> other
     end
   end
-
 
   defp format_event(level, msg, ts, md, %{format: format, metadata: keys}) do
     Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
@@ -109,8 +130,6 @@ defmodule LoggerFileBackend do
     end
   end
 
-
-
   defp take_metadata(metadata, keys) do
     metadatas = Enum.reduce(keys, [], fn key, acc ->
       case Keyword.fetch(metadata, key) do
@@ -122,7 +141,6 @@ defmodule LoggerFileBackend do
     Enum.reverse(metadatas)
   end
 
-
   defp get_inode(path) do
     case File.stat(path) do
       {:ok, %File.Stat{inode: inode}} -> inode
@@ -130,9 +148,17 @@ defmodule LoggerFileBackend do
     end
   end
 
-
   defp configure(name, opts) do
-    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil, metadata_filter: nil}
+    state = %{
+      name: nil,
+      path: nil,
+      io_device: nil,
+      inode: nil,
+      format: nil,
+      level: nil,
+      metadata: nil,
+      metadata_filter: nil,
+      rotate: nil}
     configure(name, opts, state)
   end
 
@@ -147,8 +173,15 @@ defmodule LoggerFileBackend do
     format          = Logger.Formatter.compile(format_opts)
     path            = Keyword.get(opts, :path)
     metadata_filter = Keyword.get(opts, :metadata_filter)
+    rotate          = Keyword.get(opts, :rotate)
 
-    %{state | name: name, path: path, format: format, level: level, metadata: metadata, metadata_filter: metadata_filter}
+    %{state | name: name,
+              path: path,
+              format: format,
+              level: level,
+              metadata: metadata,
+              metadata_filter: metadata_filter,
+              rotate: rotate}
   end
 
   @replacement "�"
