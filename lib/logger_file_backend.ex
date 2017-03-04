@@ -80,7 +80,6 @@ defmodule LoggerFileBackend do
     end
   end
 
-
   defp open_log(path) do
     case (path |> Path.dirname |> File.mkdir_p) do
       :ok ->
@@ -92,7 +91,6 @@ defmodule LoggerFileBackend do
     end
   end
 
-
   defp format_event(level, msg, ts, md, %{format: format, metadata: keys}) do
     Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
   end
@@ -100,6 +98,9 @@ defmodule LoggerFileBackend do
   @doc false
   @spec metadata_matches?(Keyword.t, nil|Keyword.t) :: true|false
   def metadata_matches?(_md, nil), do: true
+  def metadata_matches?(md, fun) when is_function(fun) do
+    fun.(md)
+  end
   def metadata_matches?(_md, []), do: true # all of the filter keys are present
   def metadata_matches?(md, [{key, val}|rest]) do
     case Keyword.fetch(md, key) do
@@ -108,8 +109,6 @@ defmodule LoggerFileBackend do
       _ -> false #fail on first mismatch
     end
   end
-
-
 
   defp take_metadata(metadata, keys) do
     metadatas = Enum.reduce(keys, [], fn key, acc ->
