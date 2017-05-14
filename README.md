@@ -64,7 +64,7 @@ multiple log files.
 
 ```elixir
 Logger.add_backend {LoggerFileBackend, :debug}
-Logger.configure {LoggerFileBackend, :debug},
+Logger.configure_backend {LoggerFileBackend, :debug},
   path: "/path/to/debug.log",
   format: ...,
   metadata: ...,
