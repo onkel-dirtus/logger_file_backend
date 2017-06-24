@@ -171,7 +171,7 @@ defmodule LoggerFileBackendTest do
     words = ~w(rotate1 rotate2 rotate3 rotate4 rotate5 rotate6)
     words |> Enum.map(&(Logger.debug(&1)))
 
-    assert log == Enum.join(words, "\n") <> "\n"
+    assert log() == Enum.join(words, "\n") <> "\n"
 
     config rotate: nil
 
