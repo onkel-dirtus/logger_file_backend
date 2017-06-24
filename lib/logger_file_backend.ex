@@ -58,8 +58,8 @@ defmodule LoggerFileBackend do
     end
   end
 
-  defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode} = state) when is_binary(path) do
-    if !is_nil(inode) and inode == get_inode(path) do
+  defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode, rotate: rotate} = state) when is_binary(path) do
+    if !is_nil(inode) and inode == get_inode(path) and rotate(path, rotate) do
       output = format_event(level, msg, ts, md, state)
       try do
         IO.write(io_device, output)
@@ -79,6 +79,31 @@ defmodule LoggerFileBackend do
       log_event(level, msg, ts, md, %{state | io_device: nil, inode: nil})
     end
   end
+
+  defp rename_file(path, keep) do
+
+    File.rm("#{path}.#{keep}")
+
+    Enum.map(keep-1..1, fn(x) -> File.rename("#{path}.#{x}", "#{path}.#{x+1}") end)
+
+    case File.rename(path, "#{path}.1") do
+      :ok -> false
+      _   -> true
+    end
+
+  end
+
+  defp rotate(path, %{max_bytes: max_bytes, keep: keep }) when is_integer(max_bytes) and is_integer(keep) and keep > 0 do
+
+    case File.stat(path) do
+      {:ok, %{size: size}} -> if size >= max_bytes, do:  rename_file(path, keep) , else: true
+      _                    -> true
+    end
+
+  end
+
+  defp rotate(_path, nil), do: true
+
 
 
   defp open_log(path) do
@@ -132,7 +157,7 @@ defmodule LoggerFileBackend do
 
 
   defp configure(name, opts) do
-    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil, metadata_filter: nil}
+    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil, metadata_filter: nil, rotate: nil}
     configure(name, opts, state)
   end
 
@@ -147,8 +172,9 @@ defmodule LoggerFileBackend do
     format          = Logger.Formatter.compile(format_opts)
     path            = Keyword.get(opts, :path)
     metadata_filter = Keyword.get(opts, :metadata_filter)
+    rotate          = Keyword.get(opts, :rotate)
 
-    %{state | name: name, path: path, format: format, level: level, metadata: metadata, metadata_filter: metadata_filter}
+    %{state | name: name, path: path, format: format, level: level, metadata: metadata, metadata_filter: metadata_filter, rotate: rotate}
   end
 
   @replacement "�"

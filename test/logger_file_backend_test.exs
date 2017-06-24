@@ -141,6 +141,42 @@ defmodule LoggerFileBackendTest do
     refute has_open(org_path)
   end
 
+  test "log file rotate" do
+    config format: "$message\n"
+    config rotate: %{max_bytes: 4, keep: 4}
+
+    Logger.debug "rotate1"
+    Logger.debug "rotate2"
+    Logger.debug "rotate3"
+    Logger.debug "rotate4"
+    Logger.debug "rotate5"
+    Logger.debug "rotate6"
+
+
+    p = path()
+
+    assert File.read!("#{p}.4")  == "rotate2\n"
+    assert File.read!("#{p}.3")  == "rotate3\n"
+    assert File.read!("#{p}.2")  == "rotate4\n"
+    assert File.read!("#{p}.1")  == "rotate5\n"
+    assert File.read!(p)         == "rotate6\n"
+
+    config rotate: nil
+  end
+
+  test "log file not rotate" do
+    config format: "$message\n"
+    config rotate: %{max_bytes: 100, keep: 4}
+
+    words = ~w(rotate1 rotate2 rotate3 rotate4 rotate5 rotate6)
+    words |> Enum.map(&(Logger.debug(&1)))
+
+    assert log == Enum.join(words, "\n") <> "\n"
+
+    config rotate: nil
+
+  end
+
   defp has_open(path) do
     has_open(:os.type, path)
   end
