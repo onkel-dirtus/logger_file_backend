@@ -12,7 +12,7 @@ defmodule LoggerFileBackendTest do
   setup do
     config [path: "test/logs/test.log", level: :debug]
     on_exit fn ->
-      path && File.rm_rf!(Path.dirname(path))
+      path() && File.rm_rf!(Path.dirname(path()))
     end
   end
 
@@ -27,8 +27,8 @@ defmodule LoggerFileBackendTest do
     config metadata_filter: [md_key: true]
     Logger.debug("shouldn't", md_key: false)
     Logger.debug("should", md_key: true)
-    refute log =~ "shouldn't"
-    assert log =~ "should"
+    refute log() =~ "shouldn't"
+    assert log() =~ "should"
     config metadata_filter: nil
   end
 
@@ -42,15 +42,15 @@ defmodule LoggerFileBackendTest do
   end
 
   test "creates log file" do
-    refute File.exists?(path)
+    refute File.exists?(path())
     Logger.debug("this is a msg")
-    assert File.exists?(path)
-    assert log =~ "this is a msg"
+    assert File.exists?(path())
+    assert log() =~ "this is a msg"
   end
 
   test "can log utf8 chars" do
     Logger.debug("ß\uFFaa\u0222")
-    assert log =~ "ßﾪȢ"
+    assert log() =~ "ßﾪȢ"
   end
 
   test "prune/1" do
@@ -63,41 +63,41 @@ defmodule LoggerFileBackendTest do
 
   test "prunes invalid utf-8 codepoints" do
     Logger.debug(<<"hi", 233>>)
-    assert log =~ "hi�"
+    assert log() =~ "hi�"
   end
 
   test "can configure format" do
     config format: "$message [$level]\n"
 
     Logger.debug("hello")
-    assert log =~ "hello [debug]"
+    assert log() =~ "hello [debug]"
   end
 
   test "can configure metadata" do
     config format: "$metadata$message\n", metadata: [:user_id, :auth]
 
     Logger.debug("hello")
-    assert log =~ "hello"
+    assert log() =~ "hello"
 
     Logger.metadata(auth: true)
     Logger.metadata(user_id: 11)
     Logger.metadata(user_id: 13)
 
     Logger.debug("hello")
-    assert log =~ "user_id=13 auth=true hello"
+    assert log() =~ "user_id=13 auth=true hello"
   end
 
   test "can configure level" do
     config level: :info
 
     Logger.debug("hello")
-    refute File.exists?(path)
+    refute File.exists?(path())
   end
 
   test "can configure path" do
     new_path = "test/logs/test.log.2"
     config path: new_path
-    assert new_path == path
+    assert new_path == path()
   end
 
   test "logs to new file after old file has been moved" do
@@ -105,39 +105,39 @@ defmodule LoggerFileBackendTest do
 
     Logger.debug "foo"
     Logger.debug "bar"
-    assert log == "foo\nbar\n"
+    assert log() == "foo\nbar\n"
 
-    {"", 0} = System.cmd("mv", [path, path <> ".1"])
+    {"", 0} = System.cmd("mv", [path(), path() <> ".1"])
 
     Logger.debug "biz"
     Logger.debug "baz"
-    assert log == "biz\nbaz\n"
+    assert log() == "biz\nbaz\n"
   end
 
   test "closes old log file after log file has been moved" do
     Logger.debug "foo"
-    assert has_open(path)
+    assert has_open(path())
 
-    new_path = path <> ".1"
-    {"", 0} = System.cmd("mv", [path, new_path])
+    new_path = path() <> ".1"
+    {"", 0} = System.cmd("mv", [path(), new_path])
 
     assert has_open(new_path)
 
     Logger.debug "bar"
 
-    assert has_open(path)
+    assert has_open(path())
     refute has_open(new_path)
   end
 
   test "closes old log file after path has been changed" do
     Logger.debug "foo"
-    assert has_open(path)
+    assert has_open(path())
 
-    org_path = path
-    config path: path <> ".new"
+    org_path = path()
+    config path: path() <> ".new"
 
     Logger.debug "bar"
-    assert has_open(path)
+    assert has_open(path())
     refute has_open(org_path)
   end
 
@@ -163,7 +163,7 @@ defmodule LoggerFileBackendTest do
   end
 
   defp log do
-    File.read!(path)
+    File.read!(path())
   end
 
   defp config(opts) do
