@@ -194,7 +194,7 @@ defmodule LoggerFileBackendTest do
   end
 
   defp path do
-    {:ok, path} = GenEvent.call(Logger, @backend, :path)
+    {:ok, path} = :gen_event.call(Logger, @backend, :path)
     path
   end
 
