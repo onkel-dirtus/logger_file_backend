@@ -44,6 +44,10 @@ defmodule LoggerFileBackend do
   end
 
 
+  def handle_info(_msg, state) do
+    {:ok, state}
+  end
+
   # helpers
 
   defp log_event(_level, _msg, _ts, _md, %{path: nil} = state) do
