@@ -4,7 +4,7 @@ defmodule LoggerFileBackendTest do
 
   @backend {LoggerFileBackend, :test}
 
-  import LoggerFileBackend, only: [prune: 1, metadata_matches?: 2]
+  import LoggerFileBackend, only: [prune: 1, metadata_matches?: 2, metadata_matches_exclusion?: 2]
 
   # add the backend here instead of `config/test.exs` due to issue 2649
   Logger.add_backend @backend
@@ -23,13 +23,22 @@ defmodule LoggerFileBackendTest do
     assert {:error, :already_present} = Logger.add_backend(@backend)
   end
 
-  test "can configure metadata_filter" do
-    config metadata_filter: [md_key: true]
+  test "can configure metadata_inclusion_filter" do
+    config metadata_inclusion_filter: [md_key: true]
     Logger.debug("shouldn't", md_key: false)
     Logger.debug("should", md_key: true)
     refute log() =~ "shouldn't"
     assert log() =~ "should"
-    config metadata_filter: nil
+    config metadata_inclusion_filter: nil
+  end
+
+  test "can configure metadata_exclusion_filter" do
+    config metadata_exclusion_filter: [md_key: true]
+    Logger.debug("shouldn't", md_key: true)
+    Logger.debug("should", md_key: false)
+    refute log() =~ "shouldn't"
+    assert log() =~ "should"
+    config metadata_exclusion_filter: nil
   end
 
   test "metadata_matches?" do
@@ -39,6 +48,15 @@ defmodule LoggerFileBackendTest do
     assert metadata_matches?([b: 1, a: 1], [a: 1]) == true # metadata is superset of filter
     assert metadata_matches?([c: 1, b: 1, a: 1], [b: 1, a: 1]) == true # multiple filter keys subset of metadata
     assert metadata_matches?([a: 1], [b: 1, a: 1]) == false # multiple filter keys superset of metadata
+  end
+
+  test "metadata_matches_exclusion?" do
+    assert metadata_matches_exclusion?([a: 1], [a: 1]) == true # exact match
+    assert metadata_matches_exclusion?([b: 1], [a: 1]) == false # total mismatch
+    assert metadata_matches_exclusion?([b: 1], nil) == false # default to allow
+    assert metadata_matches_exclusion?([b: 1, a: 1], [a: 1]) == true # metadata is superset of filter
+    assert metadata_matches_exclusion?([c: 1, b: 1, a: 1], [b: 1, a: 1]) == true # multiple filter keys subset of metadata
+    assert metadata_matches_exclusion?([a: 1], [b: 1, a: 1]) == true # multiple filter keys superset of metadata
   end
 
   test "creates log file" do

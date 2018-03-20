@@ -30,8 +30,8 @@ defmodule LoggerFileBackend do
   end
 
 
-  def handle_event({level, _gl, {Logger, msg, ts, md}}, %{level: min_level, metadata_filter: metadata_filter} = state) do
-    if (is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt) and metadata_matches?(md, metadata_filter) do
+  def handle_event({level, _gl, {Logger, msg, ts, md}}, %{level: min_level, metadata_inclusion_filter: metadata_inclusion_filter, metadata_exclusion_filter: metadata_exclusion_filter} = state) do
+    if (is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt) and metadata_matches?(md, metadata_inclusion_filter) and !metadata_matches_exclusion?(md, metadata_exclusion_filter) do
       log_event(level, msg, ts, md, state)
     else
       {:ok, state}
@@ -135,6 +135,17 @@ defmodule LoggerFileBackend do
     end
   end
 
+  @doc false
+  @spec metadata_matches_exclusion?(Keyword.t, nil|Keyword.t) :: true|false
+  def metadata_matches_exclusion?(_md, nil), do: false
+  def metadata_matches_exclusion?(_md, []), do: false
+  def metadata_matches_exclusion?(md, [{key, val}|rest]) do
+    case Keyword.fetch(md, key) do
+      # fail on first match
+      {:ok, ^val} -> true
+      _ -> metadata_matches_exclusion?(md, rest)
+    end
+  end
 
 
   defp take_metadata(metadata, keys) do
@@ -158,7 +169,18 @@ defmodule LoggerFileBackend do
 
 
   defp configure(name, opts) do
-    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil, metadata_filter: nil, rotate: nil}
+    state = %{
+      name: nil,
+      path: nil,
+      io_device: nil,
+      inode: nil,
+      format: nil,
+      level: nil,
+      metadata: nil,
+      metadata_inclusion_filter: nil,
+      metadata_exclusion_filter: nil,
+      rotate: nil
+    }
     configure(name, opts, state)
   end
 
@@ -167,15 +189,26 @@ defmodule LoggerFileBackend do
     opts = Keyword.merge(env, opts)
     Application.put_env(:logger, name, opts)
 
-    level           = Keyword.get(opts, :level)
-    metadata        = Keyword.get(opts, :metadata, [])
-    format_opts     = Keyword.get(opts, :format, @default_format)
-    format          = Logger.Formatter.compile(format_opts)
-    path            = Keyword.get(opts, :path)
-    metadata_filter = Keyword.get(opts, :metadata_filter)
-    rotate          = Keyword.get(opts, :rotate)
+    level                     = Keyword.get(opts, :level)
+    metadata                  = Keyword.get(opts, :metadata, [])
+    format_opts               = Keyword.get(opts, :format, @default_format)
+    format                    = Logger.Formatter.compile(format_opts)
+    path                      = Keyword.get(opts, :path)
+    metadata_inclusion_filter = Keyword.get(opts, :metadata_inclusion_filter)
+    metadata_exclusion_filter = Keyword.get(opts, :metadata_exclusion_filter)
+    rotate                    = Keyword.get(opts, :rotate)
 
-    %{state | name: name, path: path, format: format, level: level, metadata: metadata, metadata_filter: metadata_filter, rotate: rotate}
+    %{
+      state |
+      name: name,
+      path: path,
+      format: format,
+      level: level,
+      metadata: metadata,
+      metadata_inclusion_filter: metadata_inclusion_filter,
+      metadata_exclusion_filter: metadata_exclusion_filter,
+      rotate: rotate
+    }
   end
 
   @replacement "�"
