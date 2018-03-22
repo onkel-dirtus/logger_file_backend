@@ -55,8 +55,8 @@ multiple log files.
 * level - the logging level for the backend
 * format - the logging format for the backend
 * metadata - the metadata to include
-* metadata_filter - metadata terms which must be present in order to log
-
+* metadata_inclusion_filter - all metadata terms which must be present in order to log
+* metadata_exclusion_filter - if any of the metadata terms are present, it does not log
 
 ### Examples
 
@@ -68,7 +68,8 @@ Logger.configure_backend {LoggerFileBackend, :debug},
   path: "/path/to/debug.log",
   format: ...,
   metadata: ...,
-  metadata_filter: ...
+  metadata_inclusion_filter: ...
+  metadata_exclusion_filter: ...
 ```
 
 #### Application config for multiple log files
@@ -97,7 +98,19 @@ config :logger,
 config :logger, :ui,
   path: "/path/to/ui.log",
   level: :info,
-  metadata_filter: [application: :ui]
+  metadata_inclusion_filter: [application: :ui]
+```
+
+This example only logs `:info` statements from everywhere except the ones originating from the `:ui` OTP app.
+
+```elixir
+config :logger,
+  backends: [{LoggerFileBackend, :ui}]
+
+config :logger, :ui,
+  path: "/path/to/ui.log",
+  level: :info,
+  metadata_exclusion_filter: [application: :ui]
 ```
 
 This example only writes log statements with a custom metadata key to the file.
@@ -110,7 +123,7 @@ config :logger,
 config :logger, :device_1
   path: "/path/to/device_1.log",
   level: :debug,
-  metadata_filter: [device: 1]
+  metadata_inclusion_filter: [device: 1]
 
 # Usage:
 # anywhere in the code:
