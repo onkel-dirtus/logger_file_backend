@@ -107,7 +107,7 @@ This example only writes log statements with a custom metadata key to the file.
 config :logger,
   backends: [{LoggerFileBackend, :device_1}]
 
-config :logger, :device_1
+config :logger, :device_1,
   path: "/path/to/device_1.log",
   level: :debug,
   metadata_filter: [device: 1]
