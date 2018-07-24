@@ -137,6 +137,8 @@ defmodule LoggerFileBackend do
 
 
 
+  defp take_metadata(metadata, :all), do: metadata
+
   defp take_metadata(metadata, keys) do
     metadatas = Enum.reduce(keys, [], fn key, acc ->
       case Keyword.fetch(metadata, key) do
