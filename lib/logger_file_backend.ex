@@ -43,6 +43,9 @@ defmodule LoggerFileBackend do
     {:ok, state}
   end
 
+  def handle_info(_, state) do
+    {:ok, state}
+  end
 
   # helpers
 
