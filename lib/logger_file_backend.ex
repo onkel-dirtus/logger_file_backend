@@ -43,6 +43,9 @@ defmodule LoggerFileBackend do
     {:ok, state}
   end
 
+  def handle_info(_, state) do
+    {:ok, state}
+  end
 
   # helpers
 
@@ -136,6 +139,8 @@ defmodule LoggerFileBackend do
   end
 
 
+
+  defp take_metadata(metadata, :all), do: metadata
 
   defp take_metadata(metadata, keys) do
     metadatas = Enum.reduce(keys, [], fn key, acc ->
