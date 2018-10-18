@@ -3,16 +3,26 @@ defmodule LoggerFileBackendTest do
   require Logger
 
   @backend {LoggerFileBackend, :test}
+  @basedir "test/logs"
 
   import LoggerFileBackend, only: [prune: 1, metadata_matches?: 2]
 
   # add the backend here instead of `config/test.exs` due to issue 2649
   Logger.add_backend @backend
 
-  setup do
-    config [path: "test/logs/test.log", level: :debug]
+  setup_all do
     on_exit fn ->
-      path() && File.rm_rf!(Path.dirname(path()))
+      File.rm_rf!(@basedir)
+    end
+  end
+
+  setup context do
+    config [path: logfile(context, @basedir), level: :debug]
+
+    on_exit fn ->
+      # Synchronize with logger to ensure that we are finished before trying to run
+      # the next test
+      {:ok, _path} = :gen_event.call(Logger, @backend, :path)
     end
   end
 
@@ -223,6 +233,14 @@ defmodule LoggerFileBackendTest do
   end
 
   defp config(opts) do
-    Logger.configure_backend(@backend, opts)
+    :ok = Logger.configure_backend(@backend, opts)
+  end
+
+  defp logfile(context, basedir) do
+    logfile =
+      context.test
+      |> Atom.to_string()
+      |> String.replace(" ", "_")
+    Path.join(basedir, logfile)
   end
 end
