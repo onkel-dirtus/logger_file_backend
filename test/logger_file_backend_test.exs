@@ -190,7 +190,11 @@ defmodule LoggerFileBackendTest do
 
     config metadata: :all
     Logger.debug "metadata", metadata5: "foo", metadata6: "bar"
-    assert Regex.match?(~r/ ?metadata5\=foo metadata6\=bar ?/, log())
+
+    # Match separately for metadata5/metadata6 to avoid depending on order
+    contents = log()
+    assert contents =~ "metadata5=foo"
+    assert contents =~ "metadata6=bar"
   end
 
   defp has_open(path) do
