@@ -1,0 +1,21 @@
+sudo: false
+language: elixir
+elixir:
+  - 1.5
+  - 1.6
+  - 1.7
+  - 1.8
+otp_release:
+  - 19.3
+  - 20.3
+  - 21.0
+cache:
+  directories:
+    - _build
+    - deps
+script:
+  - mix test
+matrix:
+  exclude:
+    - elixir: 1.5
+      otp_release: 21.0
