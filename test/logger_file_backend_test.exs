@@ -7,9 +7,6 @@ defmodule LoggerFileBackendTest do
 
   import LoggerFileBackend, only: [prune: 1, metadata_matches?: 2]
 
-  # add the backend here instead of `config/test.exs` due to issue 2649
-  Logger.add_backend @backend
-
   setup_all do
     on_exit fn ->
       File.rm_rf!(@basedir)
@@ -17,12 +14,13 @@ defmodule LoggerFileBackendTest do
   end
 
   setup context do
+    # We add and remove the backend here to avoid cross-test effects
+    Logger.add_backend(@backend, flush: true)
+
     config [path: logfile(context, @basedir), level: :debug]
 
     on_exit fn ->
-      # Synchronize with logger to ensure that we are finished before trying to run
-      # the next test
-      {:ok, _path} = :gen_event.call(Logger, @backend, :path)
+      :ok = Logger.remove_backend(@backend)
     end
   end
 
@@ -161,7 +159,6 @@ defmodule LoggerFileBackendTest do
     Logger.debug "rotate4"
     Logger.debug "rotate5"
     Logger.debug "rotate6"
-
 
     p = path()
 
