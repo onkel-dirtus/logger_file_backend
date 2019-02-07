@@ -65,10 +65,10 @@ defmodule LoggerFileBackend do
 
   defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode, rotate: rotate} = state) when is_binary(path) do
     if !is_nil(inode) and inode == get_inode(path) and rotate(path, rotate) do
-      if state.formatter do
-        output = state.formatter.format_event(level, msg, ts, md, state.metadata)
+      output = if state.formatter do
+        state.formatter.format_event(level, msg, ts, md, state.metadata)
       else
-        output = format_event(level, msg, ts, md, state)
+        format_event(level, msg, ts, md, state)
       end
       try do
         IO.write(io_device, output)
