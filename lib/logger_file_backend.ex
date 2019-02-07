@@ -11,6 +11,7 @@ defmodule LoggerFileBackend do
   @type format    :: String.t
   @type level     :: Logger.level
   @type metadata  :: [atom]
+  @type formatter :: module()
 
 
   @default_format "$time $metadata[$level] $message\n"
@@ -64,7 +65,11 @@ defmodule LoggerFileBackend do
 
   defp log_event(level, msg, ts, md, %{path: path, io_device: io_device, inode: inode, rotate: rotate} = state) when is_binary(path) do
     if !is_nil(inode) and inode == get_inode(path) and rotate(path, rotate) do
-      output = format_event(level, msg, ts, md, state)
+      if state.formatter do
+        output = state.formatter.format_event(level, msg, ts, md, state.metadata)
+      else
+        output = format_event(level, msg, ts, md, state)
+      end
       try do
         IO.write(io_device, output)
         {:ok, state}
@@ -163,7 +168,7 @@ defmodule LoggerFileBackend do
 
 
   defp configure(name, opts) do
-    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil, metadata_filter: nil, rotate: nil}
+    state = %{name: nil, path: nil, io_device: nil, inode: nil, format: nil, level: nil, metadata: nil, metadata_filter: nil, rotate: nil, formatter: nil}
     configure(name, opts, state)
   end
 
@@ -176,11 +181,12 @@ defmodule LoggerFileBackend do
     metadata        = Keyword.get(opts, :metadata, [])
     format_opts     = Keyword.get(opts, :format, @default_format)
     format          = Logger.Formatter.compile(format_opts)
+    formatter       = Keyword.get(opts, :formatter)
     path            = Keyword.get(opts, :path)
     metadata_filter = Keyword.get(opts, :metadata_filter)
     rotate          = Keyword.get(opts, :rotate)
 
-    %{state | name: name, path: path, format: format, level: level, metadata: metadata, metadata_filter: metadata_filter, rotate: rotate}
+    %{state | name: name, path: path, format: format, level: level, metadata: metadata, metadata_filter: metadata_filter, rotate: rotate, formatter: formatter}
   end
 
   @replacement "�"
