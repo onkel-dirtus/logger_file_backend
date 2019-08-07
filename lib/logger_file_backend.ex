@@ -7,11 +7,13 @@ defmodule LoggerFileBackend do
 
   @type path      :: String.t
   @type file      :: :file.io_device
-  @type inode     :: File.Stat.t
+  @type inode     :: integer
   @type format    :: String.t
   @type level     :: Logger.level
   @type metadata  :: [atom]
 
+  require Record
+  Record.defrecordp :file_info, Record.extract(:file_info, from_lib: "kernel/include/file.hrl")
 
   @default_format "$time $metadata[$level] $message\n"
 
@@ -99,9 +101,11 @@ defmodule LoggerFileBackend do
 
   defp rotate(path, %{max_bytes: max_bytes, keep: keep }) when is_integer(max_bytes) and is_integer(keep) and keep > 0 do
 
-    case File.stat(path) do
-      {:ok, %{size: size}} -> if size >= max_bytes, do:  rename_file(path, keep) , else: true
-      _                    -> true
+    case :file.read_file_info(path, [:raw]) do
+      {:ok, file_info(size: size)} ->
+        if size >= max_bytes, do:  rename_file(path, keep) , else: true
+      _ ->
+        true
     end
 
   end
@@ -155,8 +159,8 @@ defmodule LoggerFileBackend do
 
 
   defp get_inode(path) do
-    case File.stat(path) do
-      {:ok, %File.Stat{inode: inode}} -> inode
+    case :file.read_file_info(path, [:raw]) do
+      {:ok, file_info(inode: inode)} -> inode
       {:error, _} -> nil
     end
   end
