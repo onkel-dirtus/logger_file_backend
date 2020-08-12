@@ -32,6 +32,15 @@ defmodule LoggerFileBackendTest do
     config metadata_filter: nil
   end
 
+  test "can configure metadata_reject" do
+    config metadata_reject: [md_key: false]
+    Logger.debug("shouldn't", md_key: false)
+    Logger.debug("should", md_key: true)
+    refute log() =~ "shouldn't"
+    assert log() =~ "should"
+    config metadata_reject: nil
+  end
+
   test "metadata_matches?" do
     assert metadata_matches?([a: 1], [a: 1]) == true # exact match
     assert metadata_matches?([b: 1], [a: 1]) == false # total mismatch
