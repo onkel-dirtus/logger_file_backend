@@ -31,10 +31,12 @@ defmodule LoggerFileBackend do
 
   def handle_event(
         {level, _gl, {Logger, msg, ts, md}},
-        %{level: min_level, metadata_filter: metadata_filter} = state
+        %{level: min_level, metadata_filter: metadata_filter, metadata_reject: metadata_reject} =
+          state
       ) do
     if (is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt) and
-         metadata_matches?(md, metadata_filter) do
+         metadata_matches?(md, metadata_filter) and
+         (is_nil(metadata_reject) or !metadata_matches?(md, metadata_reject)) do
       log_event(level, msg, ts, md, state)
     else
       {:ok, state}
@@ -206,6 +208,7 @@ defmodule LoggerFileBackend do
       level: nil,
       metadata: nil,
       metadata_filter: nil,
+      metadata_reject: nil,
       rotate: nil
     }
 
@@ -223,6 +226,7 @@ defmodule LoggerFileBackend do
     format = Logger.Formatter.compile(format_opts)
     path = Keyword.get(opts, :path)
     metadata_filter = Keyword.get(opts, :metadata_filter)
+    metadata_reject = Keyword.get(opts, :metadata_reject)
     rotate = Keyword.get(opts, :rotate)
 
     %{
@@ -233,6 +237,7 @@ defmodule LoggerFileBackend do
         level: level,
         metadata: metadata,
         metadata_filter: metadata_filter,
+        metadata_reject: metadata_reject,
         rotate: rotate
     }
   end
