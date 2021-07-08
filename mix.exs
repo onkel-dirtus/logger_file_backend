@@ -3,7 +3,7 @@ defmodule LoggerFileBackend.Mixfile do
 
   def project do
     [app: :logger_file_backend,
-     version: "0.0.10",
+     version: "0.0.11",
      elixir: "~> 1.0",
      description: description(),
      package: package(),
@@ -11,7 +11,7 @@ defmodule LoggerFileBackend.Mixfile do
   end
 
   def application do
-    [applications: []]
+    [extra_applications: [:logger]]
   end
 
   defp description do

@@ -195,6 +195,23 @@ defmodule LoggerFileBackendTest do
 
   end
 
+  test "Allow :all to metadata" do
+    config format: "$metadata"
+
+    config metadata: []
+    Logger.debug "metadata", metadata1: "foo", metadata2: "bar"
+    assert log() == ""
+
+    config metadata: [:metadata3]
+    Logger.debug "metadata", metadata3: "foo", metadata4: "bar"
+    assert log() == "metadata3=foo "
+
+    config metadata: :all
+    Logger.debug "metadata", metadata5: "foo", metadata6: "bar"
+    assert log() =~ ~r/metadata5=foo/
+    assert log() =~ ~r/metadata6=bar/
+  end
+
   defp has_open(path) do
     has_open(:os.type, path)
   end
