@@ -7,6 +7,8 @@ used in conjunction with external log rotation.
 
 **Note** The following of file renames does not work on Windows, because `File.Stat.inode` is used to determine whether the log file has been (re)moved and, on non-Unix, `File.Stat.inode` is always 0.
 
+**Note** If you are running this with the Phoenix framework, please review the Phoenix specific instructions later on in this file.
+
 ## Configuration
 
 `LoggerFileBackend` is a custom backend for the elixir `:logger` application. As
@@ -107,7 +109,7 @@ This example only writes log statements with a custom metadata key to the file.
 config :logger,
   backends: [{LoggerFileBackend, :device_1}]
 
-config :logger, :device_1
+config :logger, :device_1,
   path: "/path/to/device_1.log",
   level: :debug,
   metadata_filter: [device: 1]
@@ -123,4 +125,26 @@ Logger.metadata(device: 1)
 
 # Later, in other code (handle_cast/2, etc.)
 Logger.info("statement") # <= already tagged with the device_1 metadata
+```
+
+
+## Additional Phoenix Configurations
+
+Phoenix makes use of its own `mix.exs` file to track dependencies and additional applications. Add the following to your `mix.exs`:
+
+```
+def application do
+    [applications: [
+      ...,
+      :logger_file_backend,
+      ...
+      ]
+    ]
+end
+  
+defp deps do
+  [ ...
+    {:logger_file_backend, "~> 0.0.10"},
+  ]
+end
 ```
