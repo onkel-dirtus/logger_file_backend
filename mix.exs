@@ -25,7 +25,7 @@ defmodule LoggerFileBackend.Mixfile do
   end
 
   defp deps do
-    [{:credo, "~> 0.4", only: [:dev, :test]},
-     {:ex_doc, ">= 0.0.0", only: :dev}]
+    [{:credo, "~> 1.0", only: [:dev, :test]},
+     {:ex_doc, "~> 0.24", only: :dev}]
   end
 end
