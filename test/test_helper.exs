@@ -1,2 +1,2 @@
-:application.start :logger
+:application.start(:logger)
 ExUnit.start()
