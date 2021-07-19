@@ -144,3 +144,7 @@ defp deps do
   ]
 end
 ```
+
+### Image Attribution
+
+"log" by Matthew Weatherall from [the Noun Project](https://thenounproject.com/).

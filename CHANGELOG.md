@@ -1,5 +1,10 @@
 # Changelog - logger_file_backend
 
+## 0.0.12
+
+- Bumps dependency versions
+- Combing through documentation
+
 ## 0.0.11
 
 ### Enhancements

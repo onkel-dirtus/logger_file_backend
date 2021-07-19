@@ -1,14 +1,23 @@
 defmodule LoggerFileBackend.Mixfile do
   use Mix.Project
 
+  @version "0.0.12"
+
   def project do
     [
       app: :logger_file_backend,
-      version: "0.0.12",
+      version: @version,
       elixir: "~> 1.0",
       description: description(),
       package: package(),
-      deps: deps()
+      deps: deps(),
+      docs: [
+        main: "readme",
+        source_ref: "v#{@version}",
+        source_url: "https://github.com/onkel-dirtus/logger_file_backend",
+        logo: "assets/logo.png",
+        extras: ["README.md", "CHANGELOG.md"]
+      ]
     ]
   end
 
@@ -24,7 +33,15 @@ defmodule LoggerFileBackend.Mixfile do
     [
       maintainers: ["Kurt Williams", "Everett Griffiths"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/onkel-dirtus/logger_file_backend"}
+      links: %{"GitHub" => "https://github.com/onkel-dirtus/logger_file_backend"},
+      files: [
+        "lib",
+        "assets/logo.png",
+        "mix.exs",
+        "README*",
+        "CHANGELOG*",
+        "LICENSE*"
+      ]
     ]
   end
 
