@@ -2,12 +2,14 @@ defmodule LoggerFileBackend.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :logger_file_backend,
-     version: "0.0.11",
-     elixir: "~> 1.0",
-     description: description(),
-     package: package(),
-     deps: deps()]
+    [
+      app: :logger_file_backend,
+      version: "0.0.12",
+      elixir: "~> 1.0",
+      description: description(),
+      package: package(),
+      deps: deps()
+    ]
   end
 
   def application do
@@ -19,13 +21,14 @@ defmodule LoggerFileBackend.Mixfile do
   end
 
   defp package do
-    [maintainers: ["Kurt Williams"],
-     licenses: ["MIT"],
-     links: %{"GitHub" => "https://github.com/onkel-dirtus/logger_file_backend"}]
+    [
+      maintainers: ["Kurt Williams", "Everett Griffiths"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/onkel-dirtus/logger_file_backend"}
+    ]
   end
 
   defp deps do
-    [{:credo, "~> 1.0", only: [:dev, :test]},
-     {:ex_doc, "~> 0.24", only: :dev}]
+    [{:credo, "~> 1.0", only: [:dev, :test]}, {:ex_doc, "~> 0.24", only: :dev}]
   end
 end

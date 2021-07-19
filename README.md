@@ -1,11 +1,8 @@
-LoggerFileBackend
-=================
+# LoggerFileBackend
 
-A simple `Logger` backend which writes logs to a file. It does not handle log
-rotation for you, but it does tolerate log file renames, so it can be
-used in conjunction with external log rotation.
+A simple Elixir `Logger` backend which writes logs to a file. It does not handle log rotation, but it does tolerate log file renames, so it can be used in conjunction with external log rotation.
 
-**Note** The following of file renames does not work on Windows, because `File.Stat.inode` is used to determine whether the log file has been (re)moved and, on non-Unix, `File.Stat.inode` is always 0.
+**Note** The renaming of log files does not work on Windows, because `File.Stat.inode` is used to determine whether the log file has been (re)moved and, on non-Unix, `File.Stat.inode` is always 0.
 
 **Note** If you are running this with the Phoenix framework, please review the Phoenix specific instructions later on in this file.
 
@@ -14,17 +11,17 @@ used in conjunction with external log rotation.
 `LoggerFileBackend` is a custom backend for the elixir `:logger` application. As
 such, it relies on the `:logger` application to start the relevant processes.
 However, unlike the default `:console` backend, we may want to configure
-multiple log files, each with different log levels formats, etc. Also, we want
+multiple log files, each with different log levels, formats, etc. Also, we want
 `:logger` to be responsible for starting and stopping each of our logging
 processes for us. Because of these considerations, there must be one `:logger`
 backend configured for each log file we need. Each backend has a name like
 `{LoggerFileBackend, id}`, where `id` is any elixir term (usually an atom).
 
 For example, let's say we want to log error messages to
-"/var/log/my_app/error.log". To do that, we will need to configure a backend.
+`"/var/log/my_app/error.log"`. To do that, we will need to configure a backend.
 Let's call it `{LoggerFileBackend, :error_log}`.
 
-Our config.exs would have an entry similar to this:
+Our `config.exs` would have an entry similar to this:
 
 ```elixir
 # tell logger to load a LoggerFileBackend processes
@@ -53,12 +50,11 @@ multiple log files.
 
 `LoggerFileBackend` supports the following configuration values:
 
-* path - the path to the log file
-* level - the logging level for the backend
-* format - the logging format for the backend
-* metadata - the metadata to include
-* metadata_filter - metadata terms which must be present in order to log
-
+* `path` - the path to the log file
+* `level` - the logging level for the backend
+* `format` - the logging format for the backend
+* `metadata` - the metadata to include
+* `metadata_filter` - metadata terms which must be present in order to log
 
 ### Examples
 
@@ -88,6 +84,7 @@ config :logger, :error,
   path: "/path/to/error.log",
   level: :error
 ```
+
 #### Filtering specific metadata terms
 
 This example only logs `:info` statements originating from the `:ui` OTP app; the `:application` metadata key is auto-populated by `Logger`.
@@ -127,12 +124,11 @@ Logger.metadata(device: 1)
 Logger.info("statement") # <= already tagged with the device_1 metadata
 ```
 
-
 ## Additional Phoenix Configurations
 
 Phoenix makes use of its own `mix.exs` file to track dependencies and additional applications. Add the following to your `mix.exs`:
 
-```
+```elixir
 def application do
     [applications: [
       ...,
