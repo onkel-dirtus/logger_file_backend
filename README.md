@@ -1,5 +1,11 @@
 # LoggerFileBackend
 
+[![Module Version](https://img.shields.io/hexpm/v/logger_file_backend.svg)](https://hex.pm/packages/logger_file_backend)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/logger_file_backend/)
+[![Total Download](https://img.shields.io/hexpm/dt/logger_file_backend.svg)](https://hex.pm/packages/logger_file_backend)
+[![License](https://img.shields.io/hexpm/l/logger_file_backend.svg)](https://github.com/onkel-dirtus/logger_file_backend/blob/master/LICENSE.md)
+[![Last Updated](https://img.shields.io/github/last-commit/onkel-dirtus/logger_file_backend.svg)](https://github.com/onkel-dirtus/logger_file_backend/commits/master)
+
 A simple Elixir `Logger` backend which writes logs to a file. It does not handle log rotation, but it does tolerate log file renames, so it can be used in conjunction with external log rotation.
 
 **Note** The renaming of log files does not work on Windows, because `File.Stat.inode` is used to determine whether the log file has been (re)moved and, on non-Unix, `File.Stat.inode` is always 0.
@@ -137,7 +143,7 @@ def application do
       ]
     ]
 end
-  
+
 defp deps do
   [ ...
     {:logger_file_backend, "~> 0.0.10"},
@@ -145,6 +151,12 @@ defp deps do
 end
 ```
 
-### Image Attribution
+## Copyright and License
+
+Copyright (c) 2014 Kurt Williams
+
+This library licensed under the [MIT license](./LICENSE.md).
+
+## Image Attribution
 
 "log" by Matthew Weatherall from [the Noun Project](https://thenounproject.com/).
