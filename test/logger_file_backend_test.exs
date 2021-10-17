@@ -43,6 +43,8 @@ defmodule LoggerFileBackendTest do
   test "metadata_matches?" do
     # exact match
     assert metadata_matches?([a: 1], a: 1) == true
+    # included in array match
+    assert metadata_matches?([a: 1], a: [1, 2]) == true
     # total mismatch
     assert metadata_matches?([b: 1], a: 1) == false
     # default to allow
