@@ -145,6 +145,17 @@ defmodule LoggerFileBackend do
   # all of the filter keys are present
   def metadata_matches?(_md, []), do: true
 
+  def metadata_matches?(md, [{key, [_ | _] = val} | rest]) do
+    case Keyword.fetch(md, key) do
+      {:ok, md_val} ->
+        (md_val in val) && metadata_matches?(md, rest)
+
+      # fail on first mismatch
+      _ ->
+        false
+    end
+  end
+
   def metadata_matches?(md, [{key, val} | rest]) do
     case Keyword.fetch(md, key) do
       {:ok, ^val} ->
