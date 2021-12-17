@@ -1,5 +1,6 @@
 defmodule LoggerFileBackendTest do
   use ExUnit.Case, async: false
+  alias LoggerFileBackendTest.MockTime
   require Logger
 
   @backend {LoggerFileBackend, :test}
@@ -179,6 +180,57 @@ defmodule LoggerFileBackendTest do
     config(rotate: nil)
   end
 
+  test "log file rotates on new days" do
+    config(format: "$message\n")
+    config(rotate: %{period: :daily})
+    config(time_adapter: LoggerFileBackendTest.MockTime)
+
+    p = path()
+
+    time  = ~N[2000-01-01 12:13:04]
+    time2 = ~N[2000-01-02 12:13:04]
+    time3 = ~N[2000-01-03 12:13:04]
+    time4 = ~N[2000-01-04 12:13:04]
+    time5 = ~N[2000-01-05 12:13:04]
+    time6 = ~N[2000-01-06 12:13:04]
+    # this is a script, each call to get m_time removes one so they will replay queries on this order
+    MockTime.set_m_time("#{p}", time)   # initial log write
+    MockTime.set_m_time("#{p}", time)   # second log write - triggers rollover
+    MockTime.set_m_time("#{p}", time2)  # log file 2 m_time
+    MockTime.set_m_time("#{p}", time2)
+    MockTime.set_m_time("#{p}", time3)
+    MockTime.set_m_time("#{p}", time3)
+    MockTime.set_m_time("#{p}", time4)
+    MockTime.set_m_time("#{p}", time4)
+    MockTime.set_m_time("#{p}", time5)
+    MockTime.set_m_time("#{p}", time5)
+    MockTime.set_m_time("#{p}", time6)
+    MockTime.set_m_time("#{p}", time6)
+
+    MockTime.pin_time(time)
+    debug("rotate1")
+    MockTime.pin_time(time2)
+    debug("rotate2")
+    MockTime.pin_time(time3)
+    debug("rotate3")
+    MockTime.pin_time(time4)
+    debug("rotate4")
+    MockTime.pin_time(time5)
+    debug("rotate5")
+    MockTime.pin_time(time6)
+    debug("rotate6")
+
+    assert File.read!("#{p}.20000101") == "rotate1\n"
+    assert File.read!("#{p}.20000102") == "rotate2\n"
+    assert File.read!("#{p}.20000103") == "rotate3\n"
+    assert File.read!("#{p}.20000104") == "rotate4\n"
+    assert File.read!("#{p}.20000105") == "rotate5\n"
+    assert File.read!(p) == "rotate6\n"
+
+    config(rotate: nil)
+    config(timeadapter: LoggerFileBackend.Time)
+  end
+
   test "log file not rotate" do
     config(format: "$message\n")
     config(rotate: %{max_bytes: 100, keep: 4})
@@ -250,4 +302,10 @@ defmodule LoggerFileBackendTest do
 
     Path.join(basedir, logfile)
   end
+
+  defp debug(message) do
+    log = {:debug, nil, {Logger, message, :calendar.local_time(), []}}
+    :ok = :gen_event.call(Logger, @backend, {:log_for_test, log})
+  end
+
 end

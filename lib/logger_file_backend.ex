@@ -29,6 +29,11 @@ defmodule LoggerFileBackend do
     {:ok, {:ok, path}, state}
   end
 
+  def handle_call({:log_for_test, log}, state) do
+    handle_event(log, state)
+    {:ok, :ok, state}
+  end
+
   def handle_event(
         {level, _gl, {Logger, msg, ts, md}},
         %{level: min_level, metadata_filter: metadata_filter} = state
@@ -72,10 +77,10 @@ defmodule LoggerFileBackend do
          msg,
          ts,
          md,
-         %{path: path, io_device: io_device, inode: inode, rotate: rotate} = state
+         %{path: path, io_device: io_device, inode: inode, rotate: rotate, time_adapter: adapter} = state
        )
        when is_binary(path) do
-    if !is_nil(inode) and inode == get_inode(path) and rotate(path, rotate) do
+    if !is_nil(inode) and inode == get_inode(path) and rotate(path, rotate, adapter) do
       output = format_event(level, msg, ts, md, state)
 
       try do
@@ -109,7 +114,15 @@ defmodule LoggerFileBackend do
     end
   end
 
-  defp rotate(path, %{max_bytes: max_bytes, keep: keep})
+  defp rename_file_with_date(path, date) do
+    formatted_date = format_date(date)
+    case File.rename(path, "#{path}.#{formatted_date}") do
+      :ok -> false
+      _ -> true
+    end
+  end
+
+  defp rotate(path, %{max_bytes: max_bytes, keep: keep}, _time_adapter)
        when is_integer(max_bytes) and is_integer(keep) and keep > 0 do
     case :file.read_file_info(path, [:raw]) do
       {:ok, file_info(size: size)} ->
@@ -120,7 +133,27 @@ defmodule LoggerFileBackend do
     end
   end
 
-  defp rotate(_path, nil), do: true
+  defp rotate(path, %{period: :daily}, time_adapter) do
+    time = time_adapter.get_time()
+    m_time = time_adapter.get_m_time(path)
+    # compare the times, print rotate if not the same
+    case compare_times_by_date(time, m_time) do
+      true ->
+        true
+      _ ->
+        rename_file_with_date(path, m_time)
+    end
+  end
+
+  defp rotate(_path, nil, _time_adapter), do: true
+
+  defp format_date(date) do
+    :io_lib.format("~4..0B~2..0B~2..0B", [date.year, date.month, date.day]) |> IO.iodata_to_binary
+  end
+
+  defp compare_times_by_date(time1, time2) do
+    time1.day == time2.day and time1.month == time2.month and time1.year == time2.year
+  end
 
   defp open_log(path) do
     case path |> Path.dirname() |> File.mkdir_p() do
@@ -198,7 +231,8 @@ defmodule LoggerFileBackend do
       level: nil,
       metadata: nil,
       metadata_filter: nil,
-      rotate: nil
+      rotate: nil,
+      time_adapter: nil
     }
 
     configure(name, opts, state)
@@ -216,6 +250,7 @@ defmodule LoggerFileBackend do
     path = Keyword.get(opts, :path)
     metadata_filter = Keyword.get(opts, :metadata_filter)
     rotate = Keyword.get(opts, :rotate)
+    time_adapter = Keyword.get(opts, :time_adapter, LoggerFileBackend.Time)
 
     %{
       state
@@ -225,7 +260,8 @@ defmodule LoggerFileBackend do
         level: level,
         metadata: metadata,
         metadata_filter: metadata_filter,
-        rotate: rotate
+        rotate: rotate,
+        time_adapter: time_adapter
     }
   end
 
