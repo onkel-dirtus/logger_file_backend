@@ -182,7 +182,7 @@ defmodule LoggerFileBackendTest do
 
   test "log file rotates on new days" do
     config(format: "$message\n")
-    config(rotate: %{period: :daily})
+    config(rotate: %{period: :daily, keep: 4})
     config(time_adapter: LoggerFileBackendTest.MockTime)
 
     p = path()
@@ -193,34 +193,36 @@ defmodule LoggerFileBackendTest do
     time4 = ~N[2000-01-04 12:13:04]
     time5 = ~N[2000-01-05 12:13:04]
     time6 = ~N[2000-01-06 12:13:04]
-    # this is a script, each call to get m_time removes one so they will replay queries on this order
-    MockTime.set_m_time("#{p}", time)   # initial log write
-    MockTime.set_m_time("#{p}", time)   # second log write - triggers rollover
-    MockTime.set_m_time("#{p}", time2)  # log file 2 m_time
-    MockTime.set_m_time("#{p}", time2)
-    MockTime.set_m_time("#{p}", time3)
-    MockTime.set_m_time("#{p}", time3)
-    MockTime.set_m_time("#{p}", time4)
-    MockTime.set_m_time("#{p}", time4)
-    MockTime.set_m_time("#{p}", time5)
-    MockTime.set_m_time("#{p}", time5)
-    MockTime.set_m_time("#{p}", time6)
-    MockTime.set_m_time("#{p}", time6)
 
     MockTime.pin_time(time)
+    MockTime.set_m_time(p, time)   # initial log write
     debug("rotate1")
+
     MockTime.pin_time(time2)
+    MockTime.set_m_time(p, time)   # second log write - triggers rollover
+    MockTime.set_m_time(p, time2)  # log file 2 m_time
     debug("rotate2")
+
     MockTime.pin_time(time3)
+    MockTime.set_m_time(p, time2)
+    MockTime.set_m_time(p, time3)
     debug("rotate3")
+
     MockTime.pin_time(time4)
+    MockTime.set_m_time(p, time3)
+    MockTime.set_m_time(p, time4)
     debug("rotate4")
+
     MockTime.pin_time(time5)
+    MockTime.set_m_time(p, time4)
+    MockTime.set_m_time(p, time5)
     debug("rotate5")
+
     MockTime.pin_time(time6)
+    MockTime.set_m_time(p, time5)
+    MockTime.set_m_time(p, time6)
     debug("rotate6")
 
-    assert File.read!("#{p}.20000101") == "rotate1\n"
     assert File.read!("#{p}.20000102") == "rotate2\n"
     assert File.read!("#{p}.20000103") == "rotate3\n"
     assert File.read!("#{p}.20000104") == "rotate4\n"

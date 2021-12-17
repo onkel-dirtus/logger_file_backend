@@ -114,12 +114,23 @@ defmodule LoggerFileBackend do
     end
   end
 
-  defp rename_file_with_date(path, date) do
+  defp rename_file_with_date(path, date, keep) do
     formatted_date = format_date(date)
     case File.rename(path, "#{path}.#{formatted_date}") do
-      :ok -> false
+      :ok ->
+        handle_date_cleanup(path, keep)
+        false
       _ -> true
     end
+  end
+
+  defp handle_date_cleanup(path, keep) do
+    {_, delete_list} = Path.wildcard("#{path}.*")
+      |> Enum.sort
+      |> Enum.reverse
+      |> Enum.split(keep)
+
+    Enum.each(delete_list, fn file -> File.rm(file) end)
   end
 
   defp rotate(path, %{max_bytes: max_bytes, keep: keep}, _time_adapter)
@@ -133,7 +144,7 @@ defmodule LoggerFileBackend do
     end
   end
 
-  defp rotate(path, %{period: :daily}, time_adapter) do
+  defp rotate(path, %{period: :daily, keep: keep}, time_adapter) do
     time = time_adapter.get_time()
     m_time = time_adapter.get_m_time(path)
     # compare the times, print rotate if not the same
@@ -141,7 +152,7 @@ defmodule LoggerFileBackend do
       true ->
         true
       _ ->
-        rename_file_with_date(path, m_time)
+        rename_file_with_date(path, m_time, keep)
     end
   end
 
