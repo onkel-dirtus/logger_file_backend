@@ -46,6 +46,14 @@ defmodule LoggerFileBackend do
     {:ok, state}
   end
 
+  def handle_info({:EXIT, _pid, _reason}, %{io_device: io_device} = state)
+      when not is_nil(io_device) do
+    case File.close(io_device) do
+      :ok -> {:ok, state}
+      {:error, reason} -> raise "failure while closing file for reason: #{reason}"
+    end
+  end
+
   def handle_info(_, state) do
     {:ok, state}
   end
