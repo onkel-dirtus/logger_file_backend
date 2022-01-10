@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.0.13
+
+- Docs cleanup
+- Release file handle
+- Bumps versions of `credo` and `ex_doc` to latest
+
 ## v0.0.12 - 2021-07-19
 
 - Bumps dependency versions
