@@ -61,6 +61,7 @@ multiple log files.
 * `format` - the logging format for the backend
 * `metadata` - the metadata to include
 * `metadata_filter` - metadata terms which must be present in order to log
+* metadata_reject - metadata terms which must be present in order to do not log
 
 ### Examples
 
