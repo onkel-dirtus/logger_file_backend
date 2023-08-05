@@ -31,10 +31,10 @@ defmodule LoggerFileBackend do
 
   def handle_event(
         {level, _gl, {Logger, msg, ts, md}},
-        %{level: min_level, metadata_filter: metadata_filter, metadata_reject: metadata_reject} =
+        %{level: min_level, level_cmp: level_cmp, metadata_filter: metadata_filter, metadata_reject: metadata_reject} =
           state
       ) do
-    if (is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt) and
+    if level_matches?(level, min_level, level_cmp) and
          metadata_matches?(md, metadata_filter) and
          (is_nil(metadata_reject) or !metadata_matches?(md, metadata_reject)) do
       log_event(level, msg, ts, md, state)
@@ -149,6 +149,10 @@ defmodule LoggerFileBackend do
     Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
   end
 
+  defp level_matches?(_, nil, _), do: true
+  defp level_matches?(level, min_level, nil), do: Logger.compare_levels(level, min_level) != :lt
+  defp level_matches?(level, min_level, :exact), do: Logger.compare_levels(level, min_level) == :eq
+
   @doc false
   @spec metadata_matches?(Keyword.t(), nil | Keyword.t()) :: true | false
   def metadata_matches?(_md, nil), do: true
@@ -206,6 +210,7 @@ defmodule LoggerFileBackend do
       inode: nil,
       format: nil,
       level: nil,
+      level_cmp: nil,
       metadata: nil,
       metadata_filter: nil,
       metadata_reject: nil,
@@ -221,6 +226,7 @@ defmodule LoggerFileBackend do
     Application.put_env(:logger, name, opts)
 
     level = Keyword.get(opts, :level)
+    level_cmp = Keyword.get(opts, :level_cmp)
     metadata = Keyword.get(opts, :metadata, [])
     format_opts = Keyword.get(opts, :format, @default_format)
     format = Logger.Formatter.compile(format_opts)
@@ -235,6 +241,7 @@ defmodule LoggerFileBackend do
         path: path,
         format: format,
         level: level,
+        level_cmp: level_cmp,
         metadata: metadata,
         metadata_filter: metadata_filter,
         metadata_reject: metadata_reject,
