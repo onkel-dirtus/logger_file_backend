@@ -58,10 +58,11 @@ multiple log files.
 
 * `path` - the path to the log file
 * `level` - the logging level for the backend
+* `level_cmp` - `nil` (default): treat level as the _minimum_ logging level for the backend; `:exact` treat level as the _exact_ logging level for the backend
 * `format` - the logging format for the backend
 * `metadata` - the metadata to include
 * `metadata_filter` - metadata terms which must be present in order to log
-* metadata_reject - metadata terms which must be present in order to do not log
+* `metadata_reject` - metadata terms which must be present in order to do not log
 
 ### Examples
 
