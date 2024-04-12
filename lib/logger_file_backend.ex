@@ -34,6 +34,9 @@ defmodule LoggerFileBackend do
         %{level: min_level, metadata_filter: metadata_filter, metadata_reject: metadata_reject} =
           state
       ) do
+    level = to_logger_level(level)
+    min_level = to_logger_level(min_level)
+
     if (is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt) and
          metadata_matches?(md, metadata_filter) and
          (is_nil(metadata_reject) or !metadata_matches?(md, metadata_reject)) do
@@ -259,4 +262,12 @@ defmodule LoggerFileBackend do
 
   defp prune_binary(<<>>, acc),
     do: acc
+
+  defp to_logger_level(:warn) do
+    if Version.compare(System.version(), "1.11.0") != :lt,
+      do: :warning,
+      else: :warn
+  end
+
+  defp to_logger_level(level), do: level
 end
