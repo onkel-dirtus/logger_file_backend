@@ -41,12 +41,12 @@ defmodule LoggerFileBackendTest do
   end
 
   test "can configure metadata_reject" do
-    config metadata_reject: [md_key: false]
+    config(metadata_reject: [md_key: false])
     Logger.debug("shouldn't", md_key: false)
     Logger.debug("should", md_key: true)
     refute log() =~ "shouldn't"
     assert log() =~ "should"
-    config metadata_reject: nil
+    config(metadata_reject: nil)
   end
 
   test "metadata_matches?" do
@@ -227,7 +227,7 @@ defmodule LoggerFileBackendTest do
   defp has_open({:unix, _}, path) do
     case System.cmd("lsof", [path]) do
       {output, 0} ->
-        output =~ System.get_pid()
+        output =~ System.pid()
 
       _ ->
         false

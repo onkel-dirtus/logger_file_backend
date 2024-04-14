@@ -2,7 +2,7 @@ defmodule LoggerFileBackend.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/onkel-dirtus/logger_file_backend"
-  @version "0.0.13"
+  @version "0.0.14"
 
   def project do
     [
@@ -41,8 +41,8 @@ defmodule LoggerFileBackend.Mixfile do
 
   defp deps do
     [
-      {:credo, "~> 1.0", only: [:dev, :test]},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+      {:credo, "~> 1.7.5", only: [:dev, :test]},
+      {:ex_doc, ">= 0.32.1", only: :dev, runtime: false}
     ]
   end
 
