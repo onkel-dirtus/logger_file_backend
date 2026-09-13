@@ -8,9 +8,10 @@ defmodule LoggerFileBackend do
   @type path :: String.t()
   @type file :: :file.io_device()
   @type inode :: integer
-  @type format :: String.t()
+  @type format :: {atom(), atom()} | [Logger.Formatter.pattern() | binary()]
   @type level :: Logger.level()
   @type metadata :: [atom]
+  @type formatter :: module()
 
   require Record
   Record.defrecordp(:file_info, Record.extract(:file_info, from_lib: "kernel/include/file.hrl"))
@@ -114,7 +115,7 @@ defmodule LoggerFileBackend do
   defp rename_file(path, keep) do
     File.rm("#{path}.#{keep}")
 
-    Enum.each((keep - 1)..1, fn x -> File.rename("#{path}.#{x}", "#{path}.#{x + 1}") end)
+    Enum.each((keep - 1)..1//-1, fn x -> File.rename("#{path}.#{x}", "#{path}.#{x + 1}") end)
 
     case File.rename(path, "#{path}.1") do
       :ok -> false
@@ -148,8 +149,28 @@ defmodule LoggerFileBackend do
     end
   end
 
-  defp format_event(level, msg, ts, md, %{format: format, metadata: keys}) do
+  defp format_event(level, msg, ts, md, %{
+         format: format,
+         formatter: Logger.Formatter,
+         metadata: keys
+       }) do
     Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
+  end
+
+  # md should be a map
+  defp format_event(level, msg, ts, md, opts) when is_list(md) do
+    format_event(level, msg, ts, Enum.into(md, %{}), opts)
+  end
+
+  defp format_event(level, msg, ts, md, %{
+         format: _format,
+         formatter: {formatter_module, formatter_opts},
+         metadata: _metadata
+       }) do
+    apply(formatter_module, :format, [
+      %{level: level, msg: {:string, msg}, meta: Map.put(md, :time, ts)},
+      formatter_opts
+    ])
   end
 
   @doc false
@@ -208,6 +229,7 @@ defmodule LoggerFileBackend do
       io_device: nil,
       inode: nil,
       format: nil,
+      formatter: nil,
       level: nil,
       metadata: nil,
       metadata_filter: nil,
@@ -225,8 +247,9 @@ defmodule LoggerFileBackend do
 
     level = Keyword.get(opts, :level)
     metadata = Keyword.get(opts, :metadata, [])
-    format_opts = Keyword.get(opts, :format, @default_format)
-    format = Logger.Formatter.compile(format_opts)
+    format_opts = Keyword.get(opts, :format)
+    format = Logger.Formatter.compile(format_opts || @default_format)
+    formatter = Keyword.get(opts, :formatter)
     path = Keyword.get(opts, :path)
     metadata_filter = Keyword.get(opts, :metadata_filter)
     metadata_reject = Keyword.get(opts, :metadata_reject)
@@ -237,6 +260,7 @@ defmodule LoggerFileBackend do
       | name: name,
         path: path,
         format: format,
+        formatter: formatter || Logger.Formatter,
         level: level,
         metadata: metadata,
         metadata_filter: metadata_filter,

@@ -42,6 +42,7 @@ defmodule LoggerFileBackend.Mixfile do
   defp deps do
     [
       {:credo, "~> 1.7.5", only: [:dev, :test]},
+      {:logger_json, "~> 7.0", only: [:dev, :test]},
       {:ex_doc, ">= 0.32.1", only: :dev, runtime: false}
     ]
   end
