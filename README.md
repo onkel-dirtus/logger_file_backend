@@ -58,10 +58,14 @@ multiple log files.
 
 * `path` - the path to the log file
 * `level` - the logging level for the backend
+* `level_mode` - how to interpret the level (`:minimum` (default) or `:exact`)
 * `format` - the logging format for the backend
+* `truncate` - truncate output to specified number of characters (default: 4096, use `:infinity` to disable)
+* `formatter` - custom formatter module and options (defaults to `Logger.Formatter`)
 * `metadata` - the metadata to include
 * `metadata_filter` - metadata terms which must be present in order to log
-* metadata_reject - metadata terms which must be present in order to do not log
+* `metadata_reject` - metadata terms which must be present in order to do not log
+* `rotate` - log rotation configuration (see Rotation section below)
 
 ### Examples
 
@@ -91,6 +95,79 @@ config :logger, :error,
   path: "/path/to/error.log",
   level: :error
 ```
+
+#### Output Truncation
+
+By default, log output is truncated to 4096 characters to prevent extremely long lines from filling up logs. You can customize this:
+
+```elixir
+config :logger, :debug,
+  path: "/path/to/debug.log",
+  truncate: :infinity  # disable truncation
+```
+
+or
+
+```elixir
+config :logger, :compact,
+  path: "/path/to/compact.log",
+  truncate: 500  # truncate to 500 characters
+```
+
+When truncation occurs, the output is appended with `(truncate)`.
+
+#### Log Level Filtering
+
+By default (`level_mode: :minimum`), the `level` option acts as a **minimum level** filter. For example, setting `level: :error` logs error, critical, and alert messages.
+
+To log **only** messages of a specific level, set `level_mode: :exact`:
+
+```elixir
+config :logger, :errors_only,
+  path: "/path/to/errors_only.log",
+  level: :error,
+  level_mode: :exact
+```
+
+#### Log Rotation
+
+You can configure automatic log rotation by setting the `rotate` option:
+
+```elixir
+config :logger,
+  backends: [{LoggerFileBackend, :debug}]
+
+config :logger, :debug,
+  path: "/path/to/debug.log",
+  level: :debug,
+  rotate: %{max_bytes: 10400, keep: 5}
+```
+
+This creates log files with a maximum size of 10,400 bytes and keeps up to 5 rotated files:
+
+```
+debug.log
+debug.log.1
+debug.log.2
+debug.log.3
+debug.log.4
+```
+
+Configuration options:
+* `max_bytes` - maximum size in bytes before rotation (required)
+* `keep` - number of rotated files to keep (required)
+
+#### Custom Formatters
+
+You can use a custom formatter instead of the default `Logger.Formatter`:
+
+```elixir
+config :logger, :json_log,
+  path: "/path/to/json.log",
+  formatter: {LoggerJSON.Formatters.Basic, [metadata: [:domain, :module]]}
+```
+
+The formatter is specified as a tuple `{module, options}` where the module's `format/2` function will be called with the log event and options.
 
 #### Filtering specific metadata terms
 

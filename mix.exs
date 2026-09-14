@@ -2,7 +2,7 @@ defmodule LoggerFileBackend.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/onkel-dirtus/logger_file_backend"
-  @version "0.0.14"
+  @version "0.1.0"
 
   def project do
     [
