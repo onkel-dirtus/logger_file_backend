@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.1.0
+
+### Enhancements
+
+- Add support for custom formatters via `:formatter` option ([#87](https://github.com/onkel-dirtus/logger_file_backend/pull/87))
+- Add output truncation support with configurable `:truncate` option (default: 4096 characters) ([#81](https://github.com/onkel-dirtus/logger_file_backend/issues/81))
+- Add `:level_mode` option for exact level filtering (`:exact`) vs. minimum level (`:minimum`, default) ([#82](https://github.com/onkel-dirtus/logger_file_backend/issues/82))
+
+### Fixes
+
+- Fix file descriptor leak when removing backend - now properly closes files on termination ([#68](https://github.com/onkel-dirtus/logger_file_backend/issues/68))
+
+### Documentation
+
+- Add comprehensive documentation for log rotation feature ([#86](https://github.com/onkel-dirtus/logger_file_backend/issues/86))
+- Document custom formatter usage
+- Document output truncation and level filtering options
+
 ## v0.0.14
 
 - fix warnings about the use of deprecated :warn
