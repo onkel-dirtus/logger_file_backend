@@ -58,7 +58,9 @@ multiple log files.
 
 * `path` - the path to the log file
 * `level` - the logging level for the backend
+* `level_mode` - how to interpret the level (`:minimum` (default) or `:exact`)
 * `format` - the logging format for the backend
+* `truncate` - truncate output to specified number of characters (default: 4096, use `:infinity` to disable)
 * `formatter` - custom formatter module and options (defaults to `Logger.Formatter`)
 * `metadata` - the metadata to include
 * `metadata_filter` - metadata terms which must be present in order to log
@@ -92,6 +94,39 @@ config :logger, :info,
 config :logger, :error,
   path: "/path/to/error.log",
   level: :error
+```
+
+#### Output Truncation
+
+By default, log output is truncated to 4096 characters to prevent extremely long lines from filling up logs. You can customize this:
+
+```elixir
+config :logger, :debug,
+  path: "/path/to/debug.log",
+  truncate: :infinity  # disable truncation
+```
+
+or
+
+```elixir
+config :logger, :compact,
+  path: "/path/to/compact.log",
+  truncate: 500  # truncate to 500 characters
+```
+
+When truncation occurs, the output is appended with `(truncate)`.
+
+#### Log Level Filtering
+
+By default (`level_mode: :minimum`), the `level` option acts as a **minimum level** filter. For example, setting `level: :error` logs error, critical, and alert messages.
+
+To log **only** messages of a specific level, set `level_mode: :exact`:
+
+```elixir
+config :logger, :errors_only,
+  path: "/path/to/errors_only.log",
+  level: :error,
+  level_mode: :exact
 ```
 
 #### Log Rotation

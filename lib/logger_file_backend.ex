@@ -32,13 +32,19 @@ defmodule LoggerFileBackend do
 
   def handle_event(
         {level, _gl, {Logger, msg, ts, md}},
-        %{level: min_level, metadata_filter: metadata_filter, metadata_reject: metadata_reject} =
+        %{level: min_level, level_mode: level_mode, metadata_filter: metadata_filter, metadata_reject: metadata_reject} =
           state
       ) do
     level = to_logger_level(level)
     min_level = to_logger_level(min_level)
 
-    if (is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt) and
+    level_matches? =
+      case level_mode do
+        :exact -> level == min_level
+        _ -> is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt
+      end
+
+    if level_matches? and
          metadata_matches?(md, metadata_filter) and
          (is_nil(metadata_reject) or !metadata_matches?(md, metadata_reject)) do
       log_event(level, msg, ts, md, state)
@@ -161,8 +167,9 @@ defmodule LoggerFileBackend do
          format: format,
          formatter: Logger.Formatter,
          metadata: keys
-       }) do
-    Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
+       } = state) do
+    output = Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
+    truncate_output(output, state.truncate)
   end
 
   # md should be a map
@@ -174,11 +181,24 @@ defmodule LoggerFileBackend do
          format: _format,
          formatter: {formatter_module, formatter_opts},
          metadata: _metadata
-       }) do
-    apply(formatter_module, :format, [
+       } = state) do
+    output = apply(formatter_module, :format, [
       %{level: level, msg: {:string, msg}, meta: Map.put(md, :time, ts)},
       formatter_opts
     ])
+    truncate_output(output, state.truncate)
+  end
+
+  defp truncate_output(output, :infinity), do: output
+  defp truncate_output(output, nil), do: output
+
+  defp truncate_output(output, max_length) when is_integer(max_length) do
+    output_str = output |> prune() |> IO.chardata_to_string()
+    if String.length(output_str) > max_length do
+      String.slice(output_str, 0, max_length - 10) <> "(truncate)\n"
+    else
+      output_str
+    end
   end
 
   @doc false
@@ -239,10 +259,12 @@ defmodule LoggerFileBackend do
       format: nil,
       formatter: nil,
       level: nil,
+      level_mode: :minimum,
       metadata: nil,
       metadata_filter: nil,
       metadata_reject: nil,
-      rotate: nil
+      rotate: nil,
+      truncate: 4096
     }
 
     configure(name, opts, state)
@@ -254,6 +276,7 @@ defmodule LoggerFileBackend do
     Application.put_env(:logger, name, opts)
 
     level = Keyword.get(opts, :level)
+    level_mode = Keyword.get(opts, :level_mode, :minimum)
     metadata = Keyword.get(opts, :metadata, [])
     format_opts = Keyword.get(opts, :format)
     format = Logger.Formatter.compile(format_opts || @default_format)
@@ -262,6 +285,7 @@ defmodule LoggerFileBackend do
     metadata_filter = Keyword.get(opts, :metadata_filter)
     metadata_reject = Keyword.get(opts, :metadata_reject)
     rotate = Keyword.get(opts, :rotate)
+    truncate = Keyword.get(opts, :truncate, 4096)
 
     %{
       state
@@ -270,10 +294,12 @@ defmodule LoggerFileBackend do
         format: format,
         formatter: formatter || Logger.Formatter,
         level: level,
+        level_mode: level_mode,
         metadata: metadata,
         metadata_filter: metadata_filter,
         metadata_reject: metadata_reject,
-        rotate: rotate
+        rotate: rotate,
+        truncate: truncate
     }
   end
 
