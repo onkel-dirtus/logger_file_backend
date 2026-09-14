@@ -32,7 +32,12 @@ defmodule LoggerFileBackend do
 
   def handle_event(
         {level, _gl, {Logger, msg, ts, md}},
-        %{level: min_level, level_mode: level_mode, metadata_filter: metadata_filter, metadata_reject: metadata_reject} =
+        %{
+          level: min_level,
+          level_mode: level_mode,
+          metadata_filter: metadata_filter,
+          metadata_reject: metadata_reject
+        } =
           state
       ) do
     level = to_logger_level(level)
@@ -163,11 +168,17 @@ defmodule LoggerFileBackend do
     end
   end
 
-  defp format_event(level, msg, ts, md, %{
-         format: format,
-         formatter: Logger.Formatter,
-         metadata: keys
-       } = state) do
+  defp format_event(
+         level,
+         msg,
+         ts,
+         md,
+         %{
+           format: format,
+           formatter: Logger.Formatter,
+           metadata: keys
+         } = state
+       ) do
     output = Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
     truncate_output(output, state.truncate)
   end
@@ -177,15 +188,23 @@ defmodule LoggerFileBackend do
     format_event(level, msg, ts, Enum.into(md, %{}), opts)
   end
 
-  defp format_event(level, msg, ts, md, %{
-         format: _format,
-         formatter: {formatter_module, formatter_opts},
-         metadata: _metadata
-       } = state) do
-    output = apply(formatter_module, :format, [
-      %{level: level, msg: {:string, msg}, meta: Map.put(md, :time, ts)},
-      formatter_opts
-    ])
+  defp format_event(
+         level,
+         msg,
+         ts,
+         md,
+         %{
+           format: _format,
+           formatter: {formatter_module, formatter_opts},
+           metadata: _metadata
+         } = state
+       ) do
+    output =
+      apply(formatter_module, :format, [
+        %{level: level, msg: {:string, msg}, meta: Map.put(md, :time, ts)},
+        formatter_opts
+      ])
+
     truncate_output(output, state.truncate)
   end
 
@@ -194,6 +213,7 @@ defmodule LoggerFileBackend do
 
   defp truncate_output(output, max_length) when is_integer(max_length) do
     output_str = output |> prune() |> IO.chardata_to_string()
+
     if String.length(output_str) > max_length do
       String.slice(output_str, 0, max_length - 10) <> "(truncate)\n"
     else
