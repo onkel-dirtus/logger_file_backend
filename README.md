@@ -96,6 +96,23 @@ config :logger, :error,
   level: :error
 ```
 
+#### Configuring log format
+
+The format is configured separately from the backend definition. Each backend needs its own configuration block:
+
+```elixir
+# Backend configuration
+config :logger,
+  backends: [{LoggerFileBackend, :app}]
+
+# Format configuration for that backend
+config :logger, :app,
+  path: "/path/to/app.log",
+  format: "$date $time [$level] $message\n"
+```
+
+Available format patterns: `$date`, `$time`, `$level`, `$levelpad`, `$message`, `$metadata`
+
 #### Output Truncation
 
 By default, log output is truncated to 4096 characters to prevent extremely long lines from filling up logs. You can customize this:
