@@ -64,6 +64,14 @@ defmodule LoggerFileBackend do
     {:ok, state}
   end
 
+  def terminate(_reason, %{io_device: io_device} = _state) when not is_nil(io_device) do
+    File.close(io_device)
+  end
+
+  def terminate(_reason, _state) do
+    :ok
+  end
+
   # helpers
 
   defp log_event(_level, _msg, _ts, _md, %{path: nil} = state) do
