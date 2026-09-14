@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.1.1
+
+### Fixes
+
+- Fix Credo 1.7.5 compatibility issue with Elixir 1.19 by relaxing Credo dependency constraint
+
 ## v0.1.0
 
 ### Enhancements
